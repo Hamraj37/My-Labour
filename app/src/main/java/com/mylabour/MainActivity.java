@@ -3,6 +3,8 @@ package com.mylabour;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.EditText;
@@ -11,6 +13,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
@@ -52,6 +56,9 @@ public class MainActivity extends AppCompatActivity {
         String nodeKey = (userEmail != null) ? userEmail.replace(".", ",") : currentUser.getUid();
         mDatabase = FirebaseDatabase.getInstance().getReference("labours").child(nodeKey);
 
+        Toolbar toolbar = findViewById(R.id.main_toolbar);
+        setSupportActionBar(toolbar);
+
         recyclerView = findViewById(R.id.recycler_view);
         progressBar = findViewById(R.id.progress_bar);
 
@@ -68,21 +75,56 @@ public class MainActivity extends AppCompatActivity {
 
         FloatingActionButton fab = findViewById(R.id.fab_add_labour);
         fab.setOnClickListener(view -> showAddLabourDialog());
+    }
 
-        ImageView ivProfile = findViewById(R.id.iv_user_profile);
-        if (currentUser.getPhotoUrl() != null) {
-            ivProfile.setPadding(0, 0, 0, 0);
-            Glide.with(this)
-                    .load(currentUser.getPhotoUrl())
-                    .circleCrop()
-                    .into(ivProfile);
-        } else {
-            // Set padding for placeholder icon to look better
-            int padding = (int) (8 * getResources().getDisplayMetrics().density);
-            ivProfile.setPadding(padding, padding, padding, padding);
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        
+        // Setup Search
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+        SearchView searchView = (SearchView) searchItem.getActionView();
+        if (searchView != null) {
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    return false;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    if (adapter != null) {
+                        adapter.getFilter().filter(newText);
+                    }
+                    return false;
+                }
+            });
         }
 
-        findViewById(R.id.cv_profile).setOnClickListener(v -> showUserProfile(currentUser));
+        // Setup Profile
+        MenuItem profileItem = menu.findItem(R.id.action_profile);
+        View profileView = profileItem.getActionView();
+        if (profileView != null) {
+            ImageView ivProfile = profileView.findViewById(R.id.iv_user_profile_menu);
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            
+            if (user != null && ivProfile != null) {
+                if (user.getPhotoUrl() != null) {
+                    ivProfile.setPadding(0, 0, 0, 0);
+                    Glide.with(this)
+                            .load(user.getPhotoUrl())
+                            .circleCrop()
+                            .into(ivProfile);
+                } else {
+                    int padding = (int) (6 * getResources().getDisplayMetrics().density);
+                    ivProfile.setPadding(padding, padding, padding, padding);
+                }
+            }
+
+            profileView.setOnClickListener(v -> showUserProfile(user));
+        }
+
+        return true;
     }
 
     private void showUserProfile(FirebaseUser user) {
@@ -116,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
                     Labour labour = postSnapshot.getValue(Labour.class);
                     labourList.add(labour);
                 }
-                adapter.notifyDataSetChanged();
+                adapter.updateList(new ArrayList<>(labourList));
                 progressBar.setVisibility(View.GONE);
             }
 
