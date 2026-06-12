@@ -165,8 +165,6 @@ public class LabourDetailActivity extends AppCompatActivity {
     private void setupCustomCalendar() {
         TextView tvMonthYear = findViewById(R.id.tv_month_year);
         GridView calendarGrid = findViewById(R.id.calendar_grid);
-        TextView tvSelectedDate = findViewById(R.id.tv_selected_date);
-        TextView tvDayStatus = findViewById(R.id.tv_day_status);
 
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
@@ -193,9 +191,6 @@ public class LabourDetailActivity extends AppCompatActivity {
             CalendarAdapter.CalendarDay day = days.get(position);
             if (day.dayNumber != 0) {
                 showStatusDialog(day, position);
-                
-                tvSelectedDate.setText(day.dayNumber + " " + tvMonthYear.getText());
-                updateStatusDisplay(day, tvDayStatus);
             }
         });
     }
@@ -217,23 +212,8 @@ public class LabourDetailActivity extends AppCompatActivity {
             
             adapter.notifyDataSetChanged();
             updateSummary();
-            
-            TextView tvDayStatus = findViewById(R.id.tv_day_status);
-            updateStatusDisplay(day, tvDayStatus);
         });
         builder.show();
-    }
-
-    private void updateStatusDisplay(CalendarAdapter.CalendarDay day, TextView tvDayStatus) {
-        tvDayStatus.setText(day.status.equals("Default") ? "Tap to mark" : day.status);
-        switch (day.status) {
-            case "Double Full Day": tvDayStatus.setTextColor(android.graphics.Color.parseColor("#1B5E20")); break;
-            case "Full Day + Half": tvDayStatus.setTextColor(android.graphics.Color.parseColor("#2E7D32")); break;
-            case "Full Day": tvDayStatus.setTextColor(android.graphics.Color.parseColor("#2E7D32")); break;
-            case "Half Day": tvDayStatus.setTextColor(android.graphics.Color.parseColor("#EF6C00")); break;
-            case "Absent": tvDayStatus.setTextColor(android.graphics.Color.parseColor("#C62828")); break;
-            default: tvDayStatus.setTextColor(android.graphics.Color.parseColor("#6200EE")); break;
-        }
     }
 
     private void updateSummary() {
