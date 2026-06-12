@@ -1,5 +1,8 @@
 package com.mylabour;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -73,11 +76,12 @@ public class LabourDetailActivity extends AppCompatActivity {
             tvTotalAmount = findViewById(R.id.tv_total_amount);
 
             tvName.setText(labour.name);
-            String formattedNumber = labour.number;
-            if (formattedNumber != null && !formattedNumber.startsWith("+91")) {
-                formattedNumber = "+91" + formattedNumber;
+            String number = labour.number;
+            if (number != null && !number.startsWith("+91")) {
+                number = "+91" + number;
             }
-            tvNumber.setText(formattedNumber);
+            final String finalNumber = number;
+            tvNumber.setText(finalNumber);
             tvEmail.setText(labour.email != null && !labour.email.isEmpty() ? labour.email : "N/A");
             tvAddress.setText(labour.address != null && !labour.address.isEmpty() ? labour.address : "N/A");
             tvWage.setText("₹" + formatAmount(dailyWage));
@@ -88,6 +92,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             fetchAttendanceData();
 
             findViewById(R.id.layout_edit_wage).setOnClickListener(v -> showEditWageDialog());
+            findViewById(R.id.layout_copy_phone).setOnClickListener(v -> copyToClipboard(finalNumber));
             findViewById(R.id.btn_prev_month).setOnClickListener(v -> changeMonth(-1));
             findViewById(R.id.btn_next_month).setOnClickListener(v -> changeMonth(1));
             
@@ -450,6 +455,16 @@ public class LabourDetailActivity extends AppCompatActivity {
             startActivity(chooser);
         } else {
             Toast.makeText(this, "No UPI app found, please install one to continue", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void copyToClipboard(String text) {
+        if (text == null || text.isEmpty()) return;
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("Labour Phone Number", text);
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(this, "Copied to clipboard: " + text, Toast.LENGTH_SHORT).show();
         }
     }
 

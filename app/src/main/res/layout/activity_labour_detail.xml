@@ -84,11 +84,16 @@
 
                 <!-- Horizontal Phone Field -->
                 <LinearLayout
+                    android:id="@+id/layout_copy_phone"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="16dp">
+                    android:layout_marginBottom="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingVertical="4dp">
 
                     <TextView
                         android:layout_width="100dp"
