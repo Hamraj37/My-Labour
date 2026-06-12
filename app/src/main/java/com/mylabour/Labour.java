@@ -8,6 +8,7 @@ public class Labour implements Serializable {
     public String email;
     public String number;
     public String address;
+    public double baseWage;
 
     public Labour() {
         // Default constructor required for calls to DataSnapshot.getValue(Labour.class)
@@ -19,5 +20,6 @@ public class Labour implements Serializable {
         this.email = email;
         this.number = number;
         this.address = address;
+        this.baseWage = 0;
     }
 }

@@ -214,6 +214,16 @@ public class LabourDetailActivity extends AppCompatActivity {
             mLabourRef = FirebaseDatabase.getInstance().getReference("labours")
                     .child(nodeKey)
                     .child(labourId);
+
+            mLabourRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    currentLabour = snapshot.getValue(Labour.class);
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {}
+            });
             
             mBaseAttendanceRef = mLabourRef.child("attendance");
             updateAttendanceRef();
@@ -262,8 +272,10 @@ public class LabourDetailActivity extends AppCompatActivity {
                     .addOnSuccessListener(aVoid -> {
                         dailyWage = newWage;
                         tvWage.setText("₹" + formatAmount(dailyWage));
+                        // Also update base wage for the labour
+                        mLabourRef.child("baseWage").setValue(newWage);
                         updateSummary();
-                        Toast.makeText(this, "Wage updated for this month", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Wage updated and set as base", Toast.LENGTH_SHORT).show();
                     })
                     .addOnFailureListener(e -> Toast.makeText(this, "Failed to update wage", Toast.LENGTH_SHORT).show());
         }
@@ -293,8 +305,11 @@ public class LabourDetailActivity extends AppCompatActivity {
 
                 if (wageForMonth != null) {
                     dailyWage = wageForMonth;
+                } else if (currentLabour != null && currentLabour.baseWage > 0) {
+                    dailyWage = currentLabour.baseWage;
                 } else {
-                    dailyWage = 0;
+                    fetchAndSetBaseWageFromLastMonth();
+                    return;
                 }
                 tvWage.setText("₹" + formatAmount(dailyWage));
 
@@ -315,6 +330,46 @@ public class LabourDetailActivity extends AppCompatActivity {
             }
         };
         mAttendanceRef.addValueEventListener(attendanceListener);
+    }
+
+    private void fetchAndSetBaseWageFromLastMonth() {
+        Calendar lastMonth = (Calendar) currentCalendar.clone();
+        lastMonth.add(Calendar.MONTH, -1);
+        String lastMonthKey = lastMonth.get(Calendar.YEAR) + "_" + (lastMonth.get(Calendar.MONTH) + 1);
+
+        mBaseAttendanceRef.child(lastMonthKey).child("monthlyWage").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    double lastWage = 0;
+                    Object value = snapshot.getValue();
+                    if (value instanceof Long) {
+                        lastWage = ((Long) value).doubleValue();
+                    } else if (value instanceof Double) {
+                        lastWage = (Double) value;
+                    }
+
+                    if (lastWage > 0) {
+                        dailyWage = lastWage;
+                        tvWage.setText("₹" + formatAmount(dailyWage));
+                        // Set it as base wage for the labour
+                        mLabourRef.child("baseWage").setValue(lastWage);
+                        updateSummary();
+                        return;
+                    }
+                }
+                dailyWage = 0;
+                tvWage.setText("₹" + formatAmount(dailyWage));
+                updateSummary();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                dailyWage = 0;
+                tvWage.setText("₹" + formatAmount(dailyWage));
+                updateSummary();
+            }
+        });
     }
 
     private void saveAttendanceToFirebase(int day, String status) {
