@@ -47,12 +47,15 @@ public class CalendarAdapter extends BaseAdapter {
         CalendarDay day = days.get(position);
         TextView tvDay = convertView.findViewById(R.id.tv_day_number);
         MaterialCardView card = convertView.findViewById(R.id.card_day_background);
+        View dot = convertView.findViewById(R.id.dot_indicator);
 
         if (day.dayNumber == 0) {
             tvDay.setText("");
             card.setCardBackgroundColor(Color.TRANSPARENT);
+            dot.setVisibility(View.GONE);
         } else {
             tvDay.setText(String.valueOf(day.dayNumber));
+            dot.setVisibility(View.GONE);
             
             // Set colors based on status
             switch (day.status) {
@@ -61,8 +64,9 @@ public class CalendarAdapter extends BaseAdapter {
                     tvDay.setTextColor(Color.parseColor("#1B5E20"));
                     break;
                 case "Full Day + Half":
-                    card.setCardBackgroundColor(Color.parseColor("#C8E6C9")); // Medium Green
+                    card.setCardBackgroundColor(Color.parseColor("#E8F5E9")); // Green
                     tvDay.setTextColor(Color.parseColor("#2E7D32"));
+                    dot.setVisibility(View.VISIBLE); // Orange dot
                     break;
                 case "Full Day":
                     card.setCardBackgroundColor(Color.parseColor("#E8F5E9")); // Light Green
