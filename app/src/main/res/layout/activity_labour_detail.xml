@@ -154,8 +154,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="top"
-                    android:layout_marginBottom="16dp">
+                    android:gravity="top">
 
                     <TextView
                         android:layout_width="100dp"
@@ -176,45 +175,6 @@
                         android:textSize="16sp"
                         android:textColor="?attr/colorOnSurface"
                         android:textAlignment="viewEnd"/>
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="?attr/colorOutlineVariant"
-                    android:layout_marginBottom="16dp"/>
-
-                <!-- Horizontal Daily Wage Field -->
-                <LinearLayout
-                    android:id="@+id/layout_edit_wage"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackground">
-
-                    <TextView
-                        android:layout_width="100dp"
-                        android:layout_height="wrap_content"
-                        android:text="Daily Wage"
-                        android:textSize="14sp"
-                        android:textColor="?attr/colorOutline"
-                        android:textAllCaps="true"
-                        android:letterSpacing="0.05"/>
-
-                    <TextView
-                        android:id="@+id/tv_detail_wage"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="₹0"
-                        android:textSize="16sp"
-                        android:textColor="?attr/colorPrimary"
-                        android:textStyle="bold"
-                        android:textAlignment="viewEnd"
-                        android:padding="8dp"/>
                 </LinearLayout>
 
             </LinearLayout>
@@ -417,6 +377,37 @@
                             android:contentDescription="Next Month"
                             app:tint="?attr/colorOnSurface"/>
 
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/layout_edit_wage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp"
+                        android:padding="8dp"
+                        android:background="@drawable/bg_detail_section"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Daily Wage for this month"
+                            android:textSize="13sp"
+                            android:textColor="?attr/colorOutline"/>
+
+                        <TextView
+                            android:id="@+id/tv_detail_wage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="₹0"
+                            android:textSize="16sp"
+                            android:textColor="?attr/colorPrimary"
+                            android:textStyle="bold"
+                            android:padding="4dp"/>
                     </LinearLayout>
 
                     <!-- Weekdays Header -->

@@ -57,7 +57,7 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         if (labour != null) {
             labourId = labour.id;
-            dailyWage = labour.dailyAmount;
+            dailyWage = 0;
             TextView tvName = findViewById(R.id.tv_detail_name);
             TextView tvNumber = findViewById(R.id.tv_detail_number);
             TextView tvEmail = findViewById(R.id.tv_detail_email);
@@ -238,13 +238,13 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void updateDailyWage(double newWage) {
-        if (mLabourRef != null) {
-            mLabourRef.child("dailyAmount").setValue(newWage)
+        if (mAttendanceRef != null) {
+            mAttendanceRef.child("monthlyWage").setValue(newWage)
                     .addOnSuccessListener(aVoid -> {
                         dailyWage = newWage;
                         tvWage.setText("₹" + formatAmount(dailyWage));
                         updateSummary();
-                        Toast.makeText(this, "Wage updated", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Wage updated for this month", Toast.LENGTH_SHORT).show();
                     })
                     .addOnFailureListener(e -> Toast.makeText(this, "Failed to update wage", Toast.LENGTH_SHORT).show());
         }
@@ -257,9 +257,27 @@ public class LabourDetailActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Map<String, String> attendanceMap = new HashMap<>();
+                Double wageForMonth = null;
                 for (DataSnapshot postSnapshot : snapshot.getChildren()) {
-                    attendanceMap.put(postSnapshot.getKey(), postSnapshot.getValue(String.class));
+                    String key = postSnapshot.getKey();
+                    if (key.equals("monthlyWage")) {
+                        Object value = postSnapshot.getValue();
+                        if (value instanceof Long) {
+                            wageForMonth = ((Long) value).doubleValue();
+                        } else if (value instanceof Double) {
+                            wageForMonth = (Double) value;
+                        }
+                    } else {
+                        attendanceMap.put(key, postSnapshot.getValue(String.class));
+                    }
                 }
+
+                if (wageForMonth != null) {
+                    dailyWage = wageForMonth;
+                } else {
+                    dailyWage = 0;
+                }
+                tvWage.setText("₹" + formatAmount(dailyWage));
 
                 // Update days list with data from Firebase
                 for (CalendarAdapter.CalendarDay day : days) {
