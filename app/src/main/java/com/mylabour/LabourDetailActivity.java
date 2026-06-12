@@ -272,6 +272,7 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private void generateAndSharePdf(Labour labour) {
         View view = findViewById(R.id.content_to_export);
+        View btnChangePhoto = findViewById(R.id.btn_change_photo);
         
         int width = view.getWidth();
         int height = view.getHeight();
@@ -281,6 +282,9 @@ public class LabourDetailActivity extends AppCompatActivity {
             return;
         }
 
+        // Temporarily hide UI elements not needed in PDF
+        if (btnChangePhoto != null) btnChangePhoto.setVisibility(View.INVISIBLE);
+
         PdfDocument document = new PdfDocument();
         int footerHeight = 60;
         PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(width, height + footerHeight, 1).create();
@@ -288,6 +292,9 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         Canvas canvas = page.getCanvas();
         view.draw(canvas);
+
+        // Restore UI elements
+        if (btnChangePhoto != null) btnChangePhoto.setVisibility(View.VISIBLE);
 
         // Add footer text
         Paint paint = new Paint();
