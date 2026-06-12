@@ -9,6 +9,8 @@ import android.graphics.Canvas;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.GridView;
 import android.widget.TextView;
@@ -115,6 +117,105 @@ public class LabourDetailActivity extends AppCompatActivity {
                 if (currentLabour != null) {
                     generateAndSharePdf(currentLabour);
                 }
+            });
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_labour_detail, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_delete) {
+            showDeleteConfirmation();
+            return true;
+        } else if (id == R.id.action_edit) {
+            showEditLabourDialog();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showEditLabourDialog() {
+        if (currentLabour == null) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Edit Labour Details");
+        
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_labour, null);
+        builder.setView(dialogView);
+
+        android.widget.EditText etName = dialogView.findViewById(R.id.et_name);
+        android.widget.EditText etEmail = dialogView.findViewById(R.id.et_email);
+        android.widget.EditText etNumber = dialogView.findViewById(R.id.et_number);
+        android.widget.EditText etAddress = dialogView.findViewById(R.id.et_address);
+
+        etName.setText(currentLabour.name);
+        etEmail.setText(currentLabour.email);
+        etNumber.setText(currentLabour.number);
+        etAddress.setText(currentLabour.address);
+
+        builder.setPositiveButton("Update", (dialog, which) -> {
+            String name = etName.getText().toString().trim();
+            String email = etEmail.getText().toString().trim();
+            String number = etNumber.getText().toString().trim();
+            String address = etAddress.getText().toString().trim();
+
+            if (!name.isEmpty()) {
+                updateLabourDetails(name, email, number, address);
+            } else {
+                Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void updateLabourDetails(String name, String email, String number, String address) {
+        if (mLabourRef != null) {
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("name", name);
+            updates.put("email", email);
+            updates.put("number", number);
+            updates.put("address", address);
+
+            mLabourRef.updateChildren(updates).addOnSuccessListener(aVoid -> {
+                Toast.makeText(this, "Details updated successfully", Toast.LENGTH_SHORT).show();
+                // Local UI updates
+                TextView tvName = findViewById(R.id.tv_detail_name);
+                TextView tvNumber = findViewById(R.id.tv_detail_number);
+                TextView tvEmail = findViewById(R.id.tv_detail_email);
+                TextView tvAddress = findViewById(R.id.tv_detail_address);
+
+                tvName.setText(name);
+                tvNumber.setText(number);
+                tvEmail.setText(email.isEmpty() ? "N/A" : email);
+                tvAddress.setText(address.isEmpty() ? "N/A" : address);
+            });
+        }
+    }
+
+    private void showDeleteConfirmation() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Labour")
+                .setMessage("Are you sure you want to delete this labour and all attendance data? This cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> deleteLabour())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteLabour() {
+        if (mLabourRef != null) {
+            mLabourRef.removeValue().addOnSuccessListener(aVoid -> {
+                Toast.makeText(this, "Labour deleted successfully", Toast.LENGTH_SHORT).show();
+                finish();
+            }).addOnFailureListener(e -> {
+                Toast.makeText(this, "Failed to delete labour", Toast.LENGTH_SHORT).show();
             });
         }
     }
