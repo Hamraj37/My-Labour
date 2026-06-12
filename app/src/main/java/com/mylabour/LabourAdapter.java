@@ -27,9 +27,7 @@ public class LabourAdapter extends RecyclerView.Adapter<LabourAdapter.LabourView
     public void onBindViewHolder(@NonNull LabourViewHolder holder, int position) {
         Labour labour = labourList.get(position);
         holder.tvName.setText(labour.name);
-        holder.tvEmail.setText(labour.email);
         holder.tvNumber.setText(labour.number);
-        holder.tvAddress.setText(labour.address);
     }
 
     @Override
@@ -38,14 +36,12 @@ public class LabourAdapter extends RecyclerView.Adapter<LabourAdapter.LabourView
     }
 
     public static class LabourViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvEmail, tvNumber, tvAddress;
+        TextView tvName, tvNumber;
 
         public LabourViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tv_labour_name);
-            tvEmail = itemView.findViewById(R.id.tv_labour_email);
             tvNumber = itemView.findViewById(R.id.tv_labour_number);
-            tvAddress = itemView.findViewById(R.id.tv_labour_address);
         }
     }
 }
