@@ -40,7 +40,8 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private List<CalendarAdapter.CalendarDay> days;
     private CalendarAdapter adapter;
-    private TextView tvFullDay, tvHalfDay, tvAbsent, tvTotalAmount, tvWage;
+    private TextView tvFullDay, tvHalfDay, tvAbsent, tvTotalAmount, tvWage, tvPreviousDue;
+    private View layoutPreviousDue, dividerPrevDue;
     private DatabaseReference mAttendanceRef, mLabourRef, mBaseAttendanceRef;
     private ValueEventListener attendanceListener;
     private String labourId;
@@ -48,6 +49,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private Calendar currentCalendar;
     private String nodeKey;
     private double totalEarnings = 0;
+    private double previousMonthDue = 0;
     private Labour currentLabour;
 
     @Override
@@ -74,6 +76,9 @@ public class LabourDetailActivity extends AppCompatActivity {
             tvHalfDay = findViewById(R.id.tv_half_day_count);
             tvAbsent = findViewById(R.id.tv_absent_count);
             tvTotalAmount = findViewById(R.id.tv_total_amount);
+            tvPreviousDue = findViewById(R.id.tv_previous_due);
+            layoutPreviousDue = findViewById(R.id.layout_previous_due);
+            dividerPrevDue = findViewById(R.id.divider_prev_due);
 
             tvName.setText(labour.name);
             String number = labour.number;
@@ -90,6 +95,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             setupFirebase();
             setupCustomCalendar();
             fetchAttendanceData();
+            fetchPreviousMonthDue();
 
             findViewById(R.id.layout_edit_wage).setOnClickListener(v -> showEditWageDialog());
             findViewById(R.id.layout_copy_phone).setOnClickListener(v -> copyToClipboard(finalNumber));
@@ -243,6 +249,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         updateAttendanceRef();
         setupCustomCalendar();
         fetchAttendanceData();
+        fetchPreviousMonthDue();
     }
 
     private void showEditWageDialog() {
@@ -478,7 +485,66 @@ public class LabourDetailActivity extends AppCompatActivity {
         tvAbsent.setText(String.valueOf(absentCount));
         
         totalEarnings = totalWorkUnits * dailyWage;
-        tvTotalAmount.setText("₹" + formatAmount(totalEarnings));
+        double grandTotal = totalEarnings + previousMonthDue;
+        tvTotalAmount.setText("₹" + formatAmount(grandTotal));
+    }
+
+    private void fetchPreviousMonthDue() {
+        Calendar prevMonth = (Calendar) currentCalendar.clone();
+        prevMonth.add(Calendar.MONTH, -1);
+        String yearMonth = prevMonth.get(Calendar.YEAR) + "_" + (prevMonth.get(Calendar.MONTH) + 1);
+        
+        mBaseAttendanceRef.child(yearMonth).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                double prevWorkUnits = 0;
+                double prevWage = 0;
+                
+                for (DataSnapshot postSnapshot : snapshot.getChildren()) {
+                    String key = postSnapshot.getKey();
+                    if (key.equals("monthlyWage")) {
+                        Object value = postSnapshot.getValue();
+                        if (value instanceof Long) prevWage = ((Long) value).doubleValue();
+                        else if (value instanceof Double) prevWage = (Double) value;
+                    } else {
+                        String status = postSnapshot.getValue(String.class);
+                        prevWorkUnits += calculateWorkUnits(status);
+                    }
+                }
+                
+                previousMonthDue = prevWorkUnits * prevWage;
+                tvPreviousDue.setText("₹" + formatAmount(previousMonthDue));
+                
+                if (previousMonthDue > 0) {
+                    layoutPreviousDue.setVisibility(View.VISIBLE);
+                    dividerPrevDue.setVisibility(View.VISIBLE);
+                } else {
+                    layoutPreviousDue.setVisibility(View.GONE);
+                    dividerPrevDue.setVisibility(View.GONE);
+                }
+
+                updateSummary();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private double calculateWorkUnits(String status) {
+        if (status == null || status.equals("Default")) return 0;
+        if (status.equals("Double Full Day") || status.equals("2x")) return 2.0;
+        if (status.equals("Full Day + Half") || status.equals("1.5x")) return 1.5;
+        if (status.equals("Full Day")) return 1.0;
+        if (status.equals("Half Day")) return 0.5;
+        if (status.endsWith("x")) {
+            try {
+                return Double.parseDouble(status.replace("x", ""));
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
     }
 
     private void initiateUpiPayment() {

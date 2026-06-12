@@ -190,6 +190,44 @@
                     android:layout_marginTop="16dp"
                     android:layout_marginBottom="16dp"/>
 
+                <!-- Horizontal Previous Due Field -->
+                <LinearLayout
+                    android:id="@+id/layout_previous_due"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp"
+                    android:visibility="visible">
+
+                    <TextView
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:text="Prev. Due"
+                        android:textSize="14sp"
+                        android:textColor="?attr/colorOutline"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.05"/>
+
+                    <TextView
+                        android:id="@+id/tv_previous_due"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="₹0"
+                        android:textSize="16sp"
+                        android:textColor="#C62828"
+                        android:textAlignment="viewEnd"/>
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/divider_prev_due"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?attr/colorOutlineVariant"
+                    android:layout_marginBottom="16dp"
+                    android:visibility="visible"/>
+
                 <!-- Horizontal Total Amount Field -->
                 <LinearLayout
                     android:layout_width="match_parent"
