@@ -1,12 +1,18 @@
 package com.mylabour;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -15,6 +21,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -73,7 +82,70 @@ public class LabourDetailActivity extends AppCompatActivity {
             findViewById(R.id.layout_edit_wage).setOnClickListener(v -> showEditWageDialog());
             findViewById(R.id.btn_prev_month).setOnClickListener(v -> changeMonth(-1));
             findViewById(R.id.btn_next_month).setOnClickListener(v -> changeMonth(1));
+            findViewById(R.id.fab_share).setOnClickListener(v -> generateAndSharePdf(labour));
         }
+    }
+
+    private void generateAndSharePdf(Labour labour) {
+        PdfDocument document = new PdfDocument();
+        
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 842, 1).create(); // A4 size
+        PdfDocument.Page page = document.startPage(pageInfo);
+
+        Canvas canvas = page.getCanvas();
+        android.graphics.Paint paint = new android.graphics.Paint();
+        paint.setTextSize(16);
+
+        int y = 50;
+        canvas.drawText("Labour Details Report", 200, y, paint);
+        y += 40;
+        paint.setTextSize(14);
+        canvas.drawText("Name: " + labour.name, 50, y, paint);
+        y += 25;
+        canvas.drawText("Phone: " + labour.number, 50, y, paint);
+        y += 25;
+        canvas.drawText("Email: " + (labour.email != null ? labour.email : "N/A"), 50, y, paint);
+        y += 25;
+        canvas.drawText("Address: " + (labour.address != null ? labour.address : "N/A"), 50, y, paint);
+        y += 25;
+        canvas.drawText("Daily Wage: ₹" + formatAmount(dailyWage), 50, y, paint);
+        y += 40;
+        
+        canvas.drawText("Month: " + ((TextView) findViewById(R.id.tv_month_year)).getText(), 50, y, paint);
+        y += 30;
+        canvas.drawText("Full Days: " + tvFullDay.getText(), 50, y, paint);
+        y += 25;
+        canvas.drawText("Half Days: " + tvHalfDay.getText(), 50, y, paint);
+        y += 25;
+        canvas.drawText("Absent: " + tvAbsent.getText(), 50, y, paint);
+        y += 25;
+        paint.setTextSize(16);
+        paint.setFakeBoldText(true);
+        canvas.drawText("Total Earnings: " + tvTotalAmount.getText(), 50, y, paint);
+
+        document.finishPage(page);
+
+        File cachePath = new File(getCacheDir(), "reports");
+        cachePath.mkdirs();
+        File file = new File(cachePath, "Labour_Report_" + labour.name.replace(" ", "_") + ".pdf");
+        
+        try {
+            document.writeTo(new FileOutputStream(file));
+            document.close();
+            shareFile(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Failed to generate PDF", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void shareFile(File file) {
+        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+        android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+        intent.setType("application/pdf");
+        intent.putExtra(android.content.Intent.EXTRA_STREAM, uri);
+        intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(android.content.Intent.createChooser(intent, "Share Report"));
     }
 
     private void setupFirebase() {

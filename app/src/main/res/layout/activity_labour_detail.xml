@@ -467,4 +467,17 @@
 
     </androidx.core.widget.NestedScrollView>
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_share"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="24dp"
+        android:contentDescription="Share as PDF"
+        app:srcCompat="@drawable/ic_share"
+        app:backgroundTint="?attr/colorPrimaryContainer"
+        app:tint="?attr/colorOnPrimaryContainer"
+        app:elevation="0dp"
+        style="@style/Widget.Material3.FloatingActionButton.Primary"/>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
