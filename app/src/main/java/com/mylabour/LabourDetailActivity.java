@@ -87,46 +87,27 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void generateAndSharePdf(Labour labour) {
-        PdfDocument document = new PdfDocument();
+        View view = findViewById(R.id.content_to_export);
         
-        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 842, 1).create(); // A4 size
+        int width = view.getWidth();
+        int height = view.getHeight();
+
+        if (width <= 0 || height <= 0) {
+            Toast.makeText(this, "Content not ready yet", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        PdfDocument document = new PdfDocument();
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(width, height, 1).create();
         PdfDocument.Page page = document.startPage(pageInfo);
 
         Canvas canvas = page.getCanvas();
-        android.graphics.Paint paint = new android.graphics.Paint();
-        paint.setTextSize(16);
-
-        int y = 50;
-        canvas.drawText("Labour Details Report", 200, y, paint);
-        y += 40;
-        paint.setTextSize(14);
-        canvas.drawText("Name: " + labour.name, 50, y, paint);
-        y += 25;
-        canvas.drawText("Phone: " + labour.number, 50, y, paint);
-        y += 25;
-        canvas.drawText("Email: " + (labour.email != null ? labour.email : "N/A"), 50, y, paint);
-        y += 25;
-        canvas.drawText("Address: " + (labour.address != null ? labour.address : "N/A"), 50, y, paint);
-        y += 25;
-        canvas.drawText("Daily Wage: ₹" + formatAmount(dailyWage), 50, y, paint);
-        y += 40;
-        
-        canvas.drawText("Month: " + ((TextView) findViewById(R.id.tv_month_year)).getText(), 50, y, paint);
-        y += 30;
-        canvas.drawText("Full Days: " + tvFullDay.getText(), 50, y, paint);
-        y += 25;
-        canvas.drawText("Half Days: " + tvHalfDay.getText(), 50, y, paint);
-        y += 25;
-        canvas.drawText("Absent: " + tvAbsent.getText(), 50, y, paint);
-        y += 25;
-        paint.setTextSize(16);
-        paint.setFakeBoldText(true);
-        canvas.drawText("Total Earnings: " + tvTotalAmount.getText(), 50, y, paint);
+        view.draw(canvas);
 
         document.finishPage(page);
 
         File cachePath = new File(getCacheDir(), "reports");
-        cachePath.mkdirs();
+        if (!cachePath.exists()) cachePath.mkdirs();
         File file = new File(cachePath, "Labour_Report_" + labour.name.replace(" ", "_") + ".pdf");
         
         try {
