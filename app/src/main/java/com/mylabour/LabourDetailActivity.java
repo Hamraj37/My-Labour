@@ -28,10 +28,12 @@ public class LabourDetailActivity extends AppCompatActivity {
     private List<CalendarAdapter.CalendarDay> days;
     private CalendarAdapter adapter;
     private TextView tvFullDay, tvHalfDay, tvAbsent, tvTotalAmount, tvWage;
-    private DatabaseReference mAttendanceRef, mLabourRef;
+    private DatabaseReference mAttendanceRef, mLabourRef, mBaseAttendanceRef;
+    private ValueEventListener attendanceListener;
     private String labourId;
     private double dailyWage;
-    private String yearMonth; // e.g., "2023_10"
+    private Calendar currentCalendar;
+    private String nodeKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,11 +65,14 @@ public class LabourDetailActivity extends AppCompatActivity {
             tvAddress.setText(labour.address != null && !labour.address.isEmpty() ? labour.address : "N/A");
             tvWage.setText("₹" + formatAmount(dailyWage));
 
+            currentCalendar = Calendar.getInstance();
             setupFirebase();
             setupCustomCalendar();
             fetchAttendanceData();
 
             findViewById(R.id.layout_edit_wage).setOnClickListener(v -> showEditWageDialog());
+            findViewById(R.id.btn_prev_month).setOnClickListener(v -> changeMonth(-1));
+            findViewById(R.id.btn_next_month).setOnClickListener(v -> changeMonth(1));
         }
     }
 
@@ -75,18 +80,30 @@ public class LabourDetailActivity extends AppCompatActivity {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
             String userEmail = currentUser.getEmail();
-            String nodeKey = (userEmail != null) ? userEmail.replace(".", ",") : currentUser.getUid();
-            
-            Calendar cal = Calendar.getInstance();
-            yearMonth = cal.get(Calendar.YEAR) + "_" + (cal.get(Calendar.MONTH) + 1);
+            nodeKey = (userEmail != null) ? userEmail.replace(".", ",") : currentUser.getUid();
             
             mLabourRef = FirebaseDatabase.getInstance().getReference("labours")
                     .child(nodeKey)
                     .child(labourId);
             
-            mAttendanceRef = mLabourRef.child("attendance")
-                    .child(yearMonth);
+            mBaseAttendanceRef = mLabourRef.child("attendance");
+            updateAttendanceRef();
         }
+    }
+
+    private void updateAttendanceRef() {
+        if (mAttendanceRef != null && attendanceListener != null) {
+            mAttendanceRef.removeEventListener(attendanceListener);
+        }
+        String yearMonth = currentCalendar.get(Calendar.YEAR) + "_" + (currentCalendar.get(Calendar.MONTH) + 1);
+        mAttendanceRef = mBaseAttendanceRef.child(yearMonth);
+    }
+
+    private void changeMonth(int offset) {
+        currentCalendar.add(Calendar.MONTH, offset);
+        updateAttendanceRef();
+        setupCustomCalendar();
+        fetchAttendanceData();
     }
 
     private void showEditWageDialog() {
@@ -126,7 +143,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private void fetchAttendanceData() {
         if (mAttendanceRef == null) return;
 
-        mAttendanceRef.addValueEventListener(new ValueEventListener() {
+        attendanceListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Map<String, String> attendanceMap = new HashMap<>();
@@ -149,7 +166,8 @@ public class LabourDetailActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError error) {
                 Toast.makeText(LabourDetailActivity.this, "Failed to load attendance", Toast.LENGTH_SHORT).show();
             }
-        });
+        };
+        mAttendanceRef.addValueEventListener(attendanceListener);
     }
 
     private void saveAttendanceToFirebase(int day, String status) {
@@ -166,15 +184,15 @@ public class LabourDetailActivity extends AppCompatActivity {
         TextView tvMonthYear = findViewById(R.id.tv_month_year);
         GridView calendarGrid = findViewById(R.id.calendar_grid);
 
-        Calendar calendar = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
-        tvMonthYear.setText(sdf.format(calendar.getTime()));
+        tvMonthYear.setText(sdf.format(currentCalendar.getTime()));
 
         days = new ArrayList<>();
         
-        calendar.set(Calendar.DAY_OF_MONTH, 1);
-        int firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) - 1;
-        int daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+        Calendar cal = (Calendar) currentCalendar.clone();
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        int firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK) - 1;
+        int daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
         for (int i = 0; i < firstDayOfWeek; i++) {
             days.add(new CalendarAdapter.CalendarDay(0, ""));
