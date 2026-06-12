@@ -67,11 +67,34 @@ public class LabourDetailActivity extends AppCompatActivity {
     private double previousMonthDue = 0;
     private double paidAmountForMonth = 0;
     private Labour currentLabour;
+    private ActivityResultLauncher<String> headerImagePickerLauncher;
+    private android.widget.ImageView ivHeaderImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_labour_detail);
+
+        ivHeaderImage = findViewById(R.id.iv_header_image);
+        loadHeaderImage();
+
+        headerImagePickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri != null) {
+                try {
+                    InputStream inputStream = getContentResolver().openInputStream(uri);
+                    Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                    // Resize to a reasonable size for header
+                    Bitmap resized = resizeBitmap(bitmap, 800);
+                    String base64 = encodeToBase64(resized);
+                    saveHeaderImage(base64);
+                    ivHeaderImage.setImageBitmap(resized);
+                    ivHeaderImage.setVisibility(View.VISIBLE);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
         findViewById(R.id.btn_more).setOnClickListener(this::showMoreMenu);
@@ -143,6 +166,12 @@ public class LabourDetailActivity extends AppCompatActivity {
                 return true;
             } else if (id == R.id.action_edit) {
                 showEditLabourDialog();
+                return true;
+            } else if (id == R.id.action_change_header) {
+                headerImagePickerLauncher.launch("image/*");
+                return true;
+            } else if (id == R.id.action_remove_header) {
+                removeHeaderImage();
                 return true;
             }
             return false;
@@ -784,5 +813,55 @@ public class LabourDetailActivity extends AppCompatActivity {
         } else {
             return String.format("%s", amount);
         }
+    }
+
+    private void saveHeaderImage(String base64) {
+        getSharedPreferences("Settings", MODE_PRIVATE).edit()
+                .putString("header_image_base64", base64)
+                .apply();
+    }
+
+    private void removeHeaderImage() {
+        getSharedPreferences("Settings", MODE_PRIVATE).edit()
+                .remove("header_image_base64")
+                .apply();
+        ivHeaderImage.setImageDrawable(null);
+        ivHeaderImage.setVisibility(View.GONE);
+        Toast.makeText(this, "Header image removed", Toast.LENGTH_SHORT).show();
+    }
+
+    private void loadHeaderImage() {
+        String base64 = getSharedPreferences("Settings", MODE_PRIVATE)
+                .getString("header_image_base64", null);
+        if (base64 != null) {
+            byte[] decodedString = Base64.decode(base64, Base64.DEFAULT);
+            Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+            ivHeaderImage.setImageBitmap(decodedByte);
+            ivHeaderImage.setVisibility(View.VISIBLE);
+        } else {
+            ivHeaderImage.setVisibility(View.GONE);
+        }
+    }
+
+    private Bitmap resizeBitmap(Bitmap image, int maxSize) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        float bitmapRatio = (float) width / (float) height;
+        if (bitmapRatio > 1) {
+            width = maxSize;
+            height = (int) (width / bitmapRatio);
+        } else {
+            height = maxSize;
+            width = (int) (height * bitmapRatio);
+        }
+        return Bitmap.createScaledBitmap(image, width, height, true);
+    }
+
+    private String encodeToBase64(Bitmap image) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+        byte[] b = baos.toByteArray();
+        return Base64.encodeToString(b, Base64.DEFAULT);
     }
 }
