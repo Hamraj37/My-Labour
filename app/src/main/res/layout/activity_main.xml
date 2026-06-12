@@ -11,16 +11,55 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_title"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="My Labours"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:padding="20dp"
-            android:textColor="?attr/colorOnSurface"
-            android:gravity="start"/>
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="My Labours"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"/>
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/iv_profile"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_person"
+                android:padding="8dp"
+                android:background="?attr/colorSurfaceVariant"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                android:contentDescription="@string/profile"/>
+
+        </RelativeLayout>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorOutlineVariant">
+
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/search_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:iconifiedByDefault="false"
+                app:queryHint="@string/search_hint"
+                app:queryBackground="@android:color/transparent"/>
+
+        </com.google.android.material.card.MaterialCardView>
 
         <ProgressBar
             android:id="@+id/progress_bar"

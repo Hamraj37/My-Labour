@@ -6,12 +6,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.SearchView;
+import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -62,6 +65,30 @@ public class MainActivity extends AppCompatActivity {
         });
         recyclerView.setAdapter(adapter);
 
+        SearchView searchView = findViewById(R.id.search_view);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                adapter.filter(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                adapter.filter(newText);
+                return false;
+            }
+        });
+
+        findViewById(R.id.iv_profile).setOnClickListener(v -> showProfileDialog(currentUser));
+
+        if (currentUser.getPhotoUrl() != null) {
+            Glide.with(this)
+                    .load(currentUser.getPhotoUrl())
+                    .placeholder(R.drawable.ic_person)
+                    .into((com.google.android.material.imageview.ShapeableImageView) findViewById(R.id.iv_profile));
+        }
+
         fetchLabours();
 
         FloatingActionButton fab = findViewById(R.id.fab_add_labour);
@@ -78,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
                     Labour labour = postSnapshot.getValue(Labour.class);
                     labourList.add(labour);
                 }
-                adapter.notifyDataSetChanged();
+                adapter.setLabourList(labourList);
                 progressBar.setVisibility(View.GONE);
             }
 
@@ -129,5 +156,34 @@ public class MainActivity extends AppCompatActivity {
                     .addOnSuccessListener(aVoid -> Toast.makeText(MainActivity.this, "Labour added successfully", Toast.LENGTH_SHORT).show())
                     .addOnFailureListener(e -> Toast.makeText(MainActivity.this, "Failed to add labour", Toast.LENGTH_SHORT).show());
         }
+    }
+
+    private void showProfileDialog(FirebaseUser user) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_profile, null);
+        builder.setView(dialogView);
+
+        com.google.android.material.imageview.ShapeableImageView ivProfile = dialogView.findViewById(R.id.iv_dialog_profile);
+        TextView tvName = dialogView.findViewById(R.id.tv_dialog_name);
+        TextView tvEmail = dialogView.findViewById(R.id.tv_dialog_email);
+
+        tvName.setText(user.getDisplayName() != null ? user.getDisplayName() : "User");
+        tvEmail.setText(user.getEmail());
+
+        if (user.getPhotoUrl() != null) {
+            Glide.with(this)
+                    .load(user.getPhotoUrl())
+                    .placeholder(R.drawable.ic_person)
+                    .into(ivProfile);
+        }
+
+        builder.setPositiveButton(R.string.logout, (dialog, which) -> {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+        });
+        builder.setNegativeButton(R.string.close, (dialog, which) -> dialog.dismiss());
+        builder.show();
     }
 }

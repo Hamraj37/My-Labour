@@ -3,4 +3,9 @@
     <!-- Replace with your actual Web Client ID from Firebase Console -->
     <string name="default_web_client_id">YOUR_WEB_CLIENT_ID_HERE</string>
     <string name="add_labour">Add Labour</string>
+    <string name="profile">Profile</string>
+    <string name="logout">Logout</string>
+    <string name="close">Close</string>
+    <string name="logged_in_as">Logged in as: %1$s</string>
+    <string name="search_hint">Search labours&#8230;</string>
 </resources>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/iv_dialog_profile"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/ic_person"
+        android:background="?attr/colorSurfaceVariant"
+        android:padding="2dp"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+        app:strokeColor="?attr/colorPrimary"
+        app:strokeWidth="2dp"/>
+
+    <TextView
+        android:id="@+id/tv_dialog_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="?attr/colorOnSurface"/>
+
+    <TextView
+        android:id="@+id/tv_dialog_email"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textSize="14sp"
+        android:textColor="?attr/colorOnSurfaceVariant"/>
+
+</LinearLayout>
