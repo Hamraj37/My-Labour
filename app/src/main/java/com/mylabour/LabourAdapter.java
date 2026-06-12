@@ -1,9 +1,12 @@
 package com.mylabour;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -66,7 +69,7 @@ public class LabourAdapter extends RecyclerView.Adapter<LabourAdapter.LabourView
 
     public static class LabourViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvNumber;
-        ImageView ivAvatar;
+        com.google.android.material.imageview.ShapeableImageView ivAvatar;
         OnLabourClickListener listener;
 
         public LabourViewHolder(@NonNull View itemView, OnLabourClickListener listener) {
@@ -80,12 +83,48 @@ public class LabourAdapter extends RecyclerView.Adapter<LabourAdapter.LabourView
         public void bind(Labour labour) {
             tvName.setText(labour.name);
             tvNumber.setText(labour.number);
-            ivAvatar.setImageResource(R.drawable.ic_person);
+            
+            String photoBase64 = itemView.getContext()
+                    .getSharedPreferences("LabourPhotos", Context.MODE_PRIVATE)
+                    .getString("photo_" + labour.id, null);
+
+            if (photoBase64 != null && !photoBase64.isEmpty()) {
+                try {
+                    byte[] decodedString = Base64.decode(photoBase64, Base64.DEFAULT);
+                    Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                    ivAvatar.setImageBitmap(decodedByte);
+                    ivAvatar.setPadding(0, 0, 0, 0);
+                    ivAvatar.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        ivAvatar.setImageTintList(null);
+                    }
+                } catch (Exception e) {
+                    setDefaultAvatar();
+                }
+            } else {
+                setDefaultAvatar();
+            }
+
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onLabourClick(labour);
                 }
             });
+        }
+
+        private void setDefaultAvatar() {
+            ivAvatar.setImageResource(R.drawable.ic_person);
+            int padding = (int) (10 * itemView.getContext().getResources().getDisplayMetrics().density);
+            ivAvatar.setPadding(padding, padding, padding, padding);
+            ivAvatar.setScaleType(android.widget.ImageView.ScaleType.CENTER_INSIDE);
+            
+            // Restore default tint
+            Context context = itemView.getContext();
+            android.util.TypedValue typedValue = new android.util.TypedValue();
+            context.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnPrimaryContainer, typedValue, true);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                ivAvatar.setImageTintList(android.content.res.ColorStateList.valueOf(typedValue.data));
+            }
         }
     }
 }

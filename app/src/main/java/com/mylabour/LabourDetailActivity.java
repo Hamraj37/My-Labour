@@ -68,7 +68,9 @@ public class LabourDetailActivity extends AppCompatActivity {
     private double paidAmountForMonth = 0;
     private Labour currentLabour;
     private ActivityResultLauncher<String> headerImagePickerLauncher;
+    private ActivityResultLauncher<String> avatarPickerLauncher;
     private android.widget.ImageView ivHeaderImage;
+    private android.widget.ImageView ivDetailAvatar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +78,26 @@ public class LabourDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_labour_detail);
 
         ivHeaderImage = findViewById(R.id.iv_header_image);
+        ivDetailAvatar = findViewById(R.id.iv_detail_avatar);
         loadHeaderImage();
+
+        avatarPickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri != null) {
+                try {
+                    InputStream inputStream = getContentResolver().openInputStream(uri);
+                    Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                    Bitmap resized = resizeBitmap(bitmap, 400);
+                    String base64 = encodeToBase64(resized);
+                    saveAvatarLocally(base64);
+                    ivDetailAvatar.setImageBitmap(resized);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        findViewById(R.id.btn_change_photo).setOnClickListener(v -> avatarPickerLauncher.launch("image/*"));
 
         headerImagePickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) {
@@ -401,6 +422,31 @@ public class LabourDetailActivity extends AppCompatActivity {
         tvNumber.setText(number);
         tvEmail.setText(currentLabour.email != null && !currentLabour.email.isEmpty() ? currentLabour.email : "N/A");
         tvAddress.setText(currentLabour.address != null && !currentLabour.address.isEmpty() ? currentLabour.address : "N/A");
+
+        loadAvatarLocally();
+    }
+
+    private void saveAvatarLocally(String base64) {
+        getSharedPreferences("LabourPhotos", MODE_PRIVATE).edit()
+                .putString("photo_" + labourId, base64)
+                .apply();
+        Toast.makeText(this, "Photo saved locally", Toast.LENGTH_SHORT).show();
+    }
+
+    private void loadAvatarLocally() {
+        String base64 = getSharedPreferences("LabourPhotos", MODE_PRIVATE)
+                .getString("photo_" + labourId, null);
+        if (base64 != null && !base64.isEmpty()) {
+            try {
+                byte[] decodedString = Base64.decode(base64, Base64.DEFAULT);
+                Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                ivDetailAvatar.setImageBitmap(decodedByte);
+            } catch (Exception e) {
+                ivDetailAvatar.setImageResource(R.drawable.ic_person);
+            }
+        } else {
+            ivDetailAvatar.setImageResource(R.drawable.ic_person);
+        }
     }
 
     private void updateAttendanceRef() {

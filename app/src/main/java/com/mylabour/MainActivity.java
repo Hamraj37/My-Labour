@@ -95,6 +95,14 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(view -> showAddLabourDialog());
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
     private void fetchLabours() {
         progressBar.setVisibility(View.VISIBLE);
         mDatabase.addValueEventListener(new ValueEventListener() {
