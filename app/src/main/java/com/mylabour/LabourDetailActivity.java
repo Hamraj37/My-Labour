@@ -66,42 +66,15 @@ public class LabourDetailActivity extends AppCompatActivity {
     private double totalEarnings = 0;
     private double previousMonthDue = 0;
     private double paidAmountForMonth = 0;
-    private String currentCompanyLogoUrl = "";
     private Labour currentLabour;
-    private ActivityResultLauncher<String> imagePickerLauncher;
-    private String selectedBase64Image = null;
-    private android.widget.ImageView ivDialogLogo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_labour_detail);
 
-        imagePickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-            if (uri != null) {
-                try {
-                    InputStream inputStream = getContentResolver().openInputStream(uri);
-                    Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-                    // Resize to a reasonable size for Base64 storage (e.g., max 200px)
-                    Bitmap resized = resizeBitmap(bitmap, 200);
-                    selectedBase64Image = encodeToBase64(resized);
-                    if (ivDialogLogo != null) {
-                        ivDialogLogo.setImageBitmap(resized);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
         findViewById(R.id.btn_more).setOnClickListener(this::showMoreMenu);
-
-        findViewById(R.id.tv_company_name).setOnClickListener(v -> showEditCompanyDialog());
-        findViewById(R.id.iv_company_logo).setOnClickListener(v -> showEditCompanyDialog());
-
-        loadLocalCompanyProfile();
 
         Labour labour = (Labour) getIntent().getSerializableExtra("labour");
         currentLabour = labour;
@@ -273,7 +246,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         paint.setAntiAlias(true);
         paint.setTextAlign(Paint.Align.CENTER);
         
-        canvas.drawText("Powered by " + ((TextView) findViewById(R.id.tv_company_name)).getText().toString(), width / 2f, height + (footerHeight / 2f) + 10, paint);
+        canvas.drawText("Labour Report - " + labour.name, width / 2f, height + (footerHeight / 2f) + 10, paint);
 
         document.finishPage(page);
 
@@ -355,107 +328,6 @@ public class LabourDetailActivity extends AppCompatActivity {
         intent.putExtra(android.content.Intent.EXTRA_STREAM, uri);
         intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
         startActivity(android.content.Intent.createChooser(intent, "Share Report"));
-    }
-
-    private void showEditCompanyDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_company, null);
-        builder.setView(dialogView);
-
-        android.widget.EditText etName = dialogView.findViewById(R.id.et_company_name);
-        android.widget.EditText etLogoUrl = dialogView.findViewById(R.id.et_company_logo_url);
-        ivDialogLogo = dialogView.findViewById(R.id.iv_dialog_company_logo);
-        selectedBase64Image = null; // Reset for new edit session
-
-        TextView tvCompanyName = findViewById(R.id.tv_company_name);
-        etName.setText(tvCompanyName.getText().toString());
-        etLogoUrl.setText(currentCompanyLogoUrl);
-        
-        // Load current logo into dialog
-        if (currentCompanyLogoUrl != null && !currentCompanyLogoUrl.isEmpty()) {
-            Glide.with(this)
-                    .load(currentCompanyLogoUrl)
-                    .placeholder(R.mipmap.ic_launcher)
-                    .into(ivDialogLogo);
-        }
-
-        ivDialogLogo.setOnClickListener(v -> {
-            imagePickerLauncher.launch("image/*");
-        });
-
-        builder.setPositiveButton("Update", (dialog, which) -> {
-            String newName = etName.getText().toString().trim();
-            String newLogoUrl = etLogoUrl.getText().toString().trim();
-            
-            // If user picked a new image, we use that as the URL (Base64 string)
-            if (selectedBase64Image != null) {
-                newLogoUrl = "data:image/jpeg;base64," + selectedBase64Image;
-            }
-
-            if (!newName.isEmpty()) {
-                updateCompanyProfile(newName, newLogoUrl);
-            }
-        });
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
-    }
-
-    private Bitmap resizeBitmap(Bitmap image, int maxSize) {
-        int width = image.getWidth();
-        int height = image.getHeight();
-
-        float bitmapRatio = (float) width / (float) height;
-        if (bitmapRatio > 1) {
-            width = maxSize;
-            height = (int) (width / bitmapRatio);
-        } else {
-            height = maxSize;
-            width = (int) (height * bitmapRatio);
-        }
-        return Bitmap.createScaledBitmap(image, width, height, true);
-    }
-
-    private String encodeToBase64(Bitmap image) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 70, baos);
-        byte[] b = baos.toByteArray();
-        return Base64.encodeToString(b, Base64.DEFAULT);
-    }
-
-    private void updateCompanyProfile(String name, String logoUrl) {
-        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
-        android.content.SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("companyName", name);
-        editor.putString("companyLogoUrl", logoUrl);
-        editor.apply();
-
-        currentCompanyLogoUrl = logoUrl;
-        ((TextView) findViewById(R.id.tv_company_name)).setText(name);
-        updateCompanyLogoUI(logoUrl);
-        
-        Toast.makeText(this, "Company profile saved locally", Toast.LENGTH_SHORT).show();
-    }
-
-    private void loadLocalCompanyProfile() {
-        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
-        String name = prefs.getString("companyName", getString(R.string.app_name));
-        currentCompanyLogoUrl = prefs.getString("companyLogoUrl", "");
-
-        ((TextView) findViewById(R.id.tv_company_name)).setText(name);
-        updateCompanyLogoUI(currentCompanyLogoUrl);
-    }
-
-    private void updateCompanyLogoUI(String logoUrl) {
-        android.widget.ImageView ivLogo = findViewById(R.id.iv_company_logo);
-        if (logoUrl != null && !logoUrl.isEmpty()) {
-            Glide.with(this)
-                    .load(logoUrl)
-                    .placeholder(R.mipmap.ic_launcher)
-                    .error(R.mipmap.ic_launcher)
-                    .into(ivLogo);
-        } else {
-            ivLogo.setImageResource(R.mipmap.ic_launcher);
-        }
     }
 
     private void setupFirebase() {

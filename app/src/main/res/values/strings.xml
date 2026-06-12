@@ -8,5 +8,4 @@
     <string name="close">Close</string>
     <string name="logged_in_as">Logged in as: %1$s</string>
     <string name="search_hint">Search labours&#8230;</string>
-    <string name="company_logo">Company Logo</string>
 </resources>
