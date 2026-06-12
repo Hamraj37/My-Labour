@@ -3,6 +3,7 @@ package com.mylabour;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,6 +29,8 @@ public class LabourAdapter extends RecyclerView.Adapter<LabourAdapter.LabourView
         Labour labour = labourList.get(position);
         holder.tvName.setText(labour.name);
         holder.tvNumber.setText(labour.number);
+        // You can add logic here to load a real image if you add an image URL to your Labour model
+        holder.ivAvatar.setImageResource(R.drawable.ic_person);
     }
 
     @Override
@@ -37,11 +40,13 @@ public class LabourAdapter extends RecyclerView.Adapter<LabourAdapter.LabourView
 
     public static class LabourViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvNumber;
+        ImageView ivAvatar;
 
         public LabourViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tv_labour_name);
             tvNumber = itemView.findViewById(R.id.tv_labour_number);
+            ivAvatar = itemView.findViewById(R.id.iv_avatar);
         }
     }
 }
