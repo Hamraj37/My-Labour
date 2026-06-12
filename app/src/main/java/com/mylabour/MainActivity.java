@@ -85,6 +85,21 @@ public class MainActivity extends AppCompatActivity {
         MenuItem searchItem = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) searchItem.getActionView();
         if (searchView != null) {
+            // Tint internal search icon and other elements
+            int colorOnSurface = com.google.android.material.color.MaterialColors.getColor(searchView, com.google.android.material.R.attr.colorOnSurface);
+            
+            ImageView searchIcon = searchView.findViewById(androidx.appcompat.R.id.search_mag_icon);
+            if (searchIcon != null) searchIcon.setColorFilter(colorOnSurface);
+            
+            ImageView closeIcon = searchView.findViewById(androidx.appcompat.R.id.search_close_btn);
+            if (closeIcon != null) closeIcon.setColorFilter(colorOnSurface);
+
+            android.widget.TextView searchText = searchView.findViewById(androidx.appcompat.R.id.search_src_text);
+            if (searchText != null) {
+                searchText.setTextColor(colorOnSurface);
+                searchText.setHintTextColor(colorOnSurface & 0x80FFFFFF); // 50% opacity for hint
+            }
+
             searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
                 @Override
                 public boolean onQueryTextSubmit(String query) {
