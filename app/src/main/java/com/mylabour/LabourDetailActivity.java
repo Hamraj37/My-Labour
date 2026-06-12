@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Bundle;
@@ -232,11 +234,21 @@ public class LabourDetailActivity extends AppCompatActivity {
         }
 
         PdfDocument document = new PdfDocument();
-        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(width, height, 1).create();
+        int footerHeight = 60;
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(width, height + footerHeight, 1).create();
         PdfDocument.Page page = document.startPage(pageInfo);
 
         Canvas canvas = page.getCanvas();
         view.draw(canvas);
+
+        // Add footer text
+        Paint paint = new Paint();
+        paint.setColor(Color.GRAY);
+        paint.setTextSize(14);
+        paint.setAntiAlias(true);
+        paint.setTextAlign(Paint.Align.CENTER);
+        
+        canvas.drawText("Powered by My Labour app", width / 2f, height + (footerHeight / 2f) + 10, paint);
 
         document.finishPage(page);
 
