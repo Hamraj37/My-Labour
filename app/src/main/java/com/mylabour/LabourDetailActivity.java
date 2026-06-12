@@ -20,8 +20,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.FileProvider;
-import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -62,9 +62,8 @@ public class LabourDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_labour_detail);
 
-        MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        toolbar.setNavigationOnClickListener(v -> finish());
+        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
+        findViewById(R.id.btn_more).setOnClickListener(this::showMoreMenu);
 
         Labour labour = (Labour) getIntent().getSerializableExtra("labour");
         currentLabour = labour;
@@ -123,23 +122,21 @@ public class LabourDetailActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_labour_detail, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_delete) {
-            showDeleteConfirmation();
-            return true;
-        } else if (id == R.id.action_edit) {
-            showEditLabourDialog();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+    private void showMoreMenu(View v) {
+        PopupMenu popup = new PopupMenu(this, v);
+        popup.getMenuInflater().inflate(R.menu.menu_labour_detail, popup.getMenu());
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.action_delete) {
+                showDeleteConfirmation();
+                return true;
+            } else if (id == R.id.action_edit) {
+                showEditLabourDialog();
+                return true;
+            }
+            return false;
+        });
+        popup.show();
     }
 
     private void showEditLabourDialog() {
