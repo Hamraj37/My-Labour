@@ -38,6 +38,7 @@ dependencies {
     implementation libs.appcompat
     implementation libs.material
     implementation libs.firebase.auth
+    implementation libs.firebase.database
     implementation libs.play.services.auth
     testImplementation libs.junit
     androidTestImplementation libs.espresso.core
