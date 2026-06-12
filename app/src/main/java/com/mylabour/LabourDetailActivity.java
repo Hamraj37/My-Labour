@@ -342,12 +342,12 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void showStatusDialog(CalendarAdapter.CalendarDay day, int position) {
-        String[] options = {"Double Full Day", "Full Day + Half", "Full Day", "Half Day", "Absent", "Reset"};
+        String[] options = {"5x", "4.5x", "4x", "3.5x", "3x", "2.5x", "2x", "1.5x", "Full Day", "Half Day", "Absent", "Reset"};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Mark Attendance - Day " + day.dayNumber);
         builder.setItems(options, (dialog, which) -> {
             String newStatus;
-            if (which == 5) {
+            if (which == options.length - 1) {
                 newStatus = "Default";
             } else {
                 newStatus = options[which];
@@ -369,27 +369,33 @@ public class LabourDetailActivity extends AppCompatActivity {
         double totalWorkUnits = 0;
         
         for (CalendarAdapter.CalendarDay day : days) {
-            switch (day.status) {
-                case "Double Full Day":
-                    fullCount += 2;
-                    totalWorkUnits += 2.0;
-                    break;
-                case "Full Day + Half":
-                    fullCount += 1;
-                    halfCount += 1;
-                    totalWorkUnits += 1.5;
-                    break;
-                case "Full Day":
-                    fullCount += 1;
-                    totalWorkUnits += 1.0;
-                    break;
-                case "Half Day":
-                    halfCount += 1;
-                    totalWorkUnits += 0.5;
-                    break;
-                case "Absent":
-                    absentCount++;
-                    break;
+            String status = day.status;
+            if (status == null || status.equals("Default")) continue;
+
+            if (status.equals("Double Full Day") || status.equals("2x")) {
+                fullCount += 2;
+                totalWorkUnits += 2.0;
+            } else if (status.equals("Full Day + Half") || status.equals("1.5x")) {
+                fullCount += 1;
+                halfCount += 1;
+                totalWorkUnits += 1.5;
+            } else if (status.equals("Full Day")) {
+                fullCount += 1;
+                totalWorkUnits += 1.0;
+            } else if (status.equals("Half Day")) {
+                halfCount += 1;
+                totalWorkUnits += 0.5;
+            } else if (status.equals("Absent")) {
+                absentCount++;
+            } else if (status.endsWith("x")) {
+                try {
+                    double val = Double.parseDouble(status.replace("x", ""));
+                    totalWorkUnits += val;
+                    fullCount += (int) val;
+                    if (val % 1 != 0) {
+                        halfCount += 1;
+                    }
+                } catch (NumberFormatException ignored) {}
             }
         }
         

@@ -58,32 +58,26 @@ public class CalendarAdapter extends BaseAdapter {
             dot.setVisibility(View.GONE);
             
             // Set colors based on status
-            switch (day.status) {
-                case "Double Full Day":
-                    card.setCardBackgroundColor(Color.parseColor("#A5D6A7")); // Stronger Green
-                    tvDay.setTextColor(Color.parseColor("#1B5E20"));
-                    break;
-                case "Full Day + Half":
-                    card.setCardBackgroundColor(Color.parseColor("#E8F5E9")); // Green
-                    tvDay.setTextColor(Color.parseColor("#2E7D32"));
-                    dot.setVisibility(View.VISIBLE); // Orange dot
-                    break;
-                case "Full Day":
-                    card.setCardBackgroundColor(Color.parseColor("#E8F5E9")); // Light Green
-                    tvDay.setTextColor(Color.parseColor("#2E7D32"));
-                    break;
-                case "Half Day":
-                    card.setCardBackgroundColor(Color.parseColor("#FFF3E0")); // Light Orange
-                    tvDay.setTextColor(Color.parseColor("#EF6C00"));
-                    break;
-                case "Absent":
-                    card.setCardBackgroundColor(Color.parseColor("#FFEBEE")); // Light Red
-                    tvDay.setTextColor(Color.parseColor("#C62828"));
-                    break;
-                default:
-                    card.setCardBackgroundColor(Color.TRANSPARENT);
-                    tvDay.setTextColor(Color.BLACK);
-                    break;
+            String status = day.status;
+            if (status.equals("Double Full Day") || status.equals("2x") || (status.endsWith("x") && !status.contains(".5"))) {
+                card.setCardBackgroundColor(Color.parseColor("#A5D6A7")); // Stronger Green
+                tvDay.setTextColor(Color.parseColor("#1B5E20"));
+            } else if (status.equals("Full Day + Half") || (status.endsWith("x") && status.contains(".5"))) {
+                card.setCardBackgroundColor(Color.parseColor("#E8F5E9")); // Green
+                tvDay.setTextColor(Color.parseColor("#2E7D32"));
+                dot.setVisibility(View.VISIBLE); // Dot to indicate partial/overtime
+            } else if (status.equals("Full Day")) {
+                card.setCardBackgroundColor(Color.parseColor("#E8F5E9")); // Light Green
+                tvDay.setTextColor(Color.parseColor("#2E7D32"));
+            } else if (status.equals("Half Day")) {
+                card.setCardBackgroundColor(Color.parseColor("#FFF3E0")); // Light Orange
+                tvDay.setTextColor(Color.parseColor("#EF6C00"));
+            } else if (status.equals("Absent")) {
+                card.setCardBackgroundColor(Color.parseColor("#FFEBEE")); // Light Red
+                tvDay.setTextColor(Color.parseColor("#C62828"));
+            } else {
+                card.setCardBackgroundColor(Color.TRANSPARENT);
+                tvDay.setTextColor(Color.BLACK);
             }
         }
 
