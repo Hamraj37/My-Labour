@@ -188,16 +188,6 @@ public class LabourDetailActivity extends AppCompatActivity {
 
             mLabourRef.updateChildren(updates).addOnSuccessListener(aVoid -> {
                 Toast.makeText(this, "Details updated successfully", Toast.LENGTH_SHORT).show();
-                // Local UI updates
-                TextView tvName = findViewById(R.id.tv_detail_name);
-                TextView tvNumber = findViewById(R.id.tv_detail_number);
-                TextView tvEmail = findViewById(R.id.tv_detail_email);
-                TextView tvAddress = findViewById(R.id.tv_detail_address);
-
-                tvName.setText(name);
-                tvNumber.setText(number);
-                tvEmail.setText(email.isEmpty() ? "N/A" : email);
-                tvAddress.setText(address.isEmpty() ? "N/A" : address);
             });
         }
     }
@@ -346,6 +336,9 @@ public class LabourDetailActivity extends AppCompatActivity {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     currentLabour = snapshot.getValue(Labour.class);
+                    if (currentLabour != null) {
+                        updateHeaderUI();
+                    }
                 }
 
                 @Override
@@ -355,6 +348,22 @@ public class LabourDetailActivity extends AppCompatActivity {
             mBaseAttendanceRef = mLabourRef.child("attendance");
             updateAttendanceRef();
         }
+    }
+
+    private void updateHeaderUI() {
+        TextView tvName = findViewById(R.id.tv_detail_name);
+        TextView tvNumber = findViewById(R.id.tv_detail_number);
+        TextView tvEmail = findViewById(R.id.tv_detail_email);
+        TextView tvAddress = findViewById(R.id.tv_detail_address);
+
+        tvName.setText(currentLabour.name);
+        String number = currentLabour.number;
+        if (number != null && !number.startsWith("+91")) {
+            number = "+91" + number;
+        }
+        tvNumber.setText(number);
+        tvEmail.setText(currentLabour.email != null && !currentLabour.email.isEmpty() ? currentLabour.email : "N/A");
+        tvAddress.setText(currentLabour.address != null && !currentLabour.address.isEmpty() ? currentLabour.address : "N/A");
     }
 
     private void updateAttendanceRef() {
