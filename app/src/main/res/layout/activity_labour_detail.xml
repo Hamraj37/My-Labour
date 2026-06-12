@@ -471,7 +471,8 @@
         android:layout_gravity="bottom|center_horizontal"
         android:layout_margin="24dp"
         android:orientation="horizontal"
-        android:gravity="center">
+        android:gravity="center"
+        app:layout_behavior="@string/hide_bottom_view_on_scroll_behavior">
 
         <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
             android:id="@+id/fab_pay"
