@@ -84,24 +84,16 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content">
 
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/card_avatar"
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/iv_detail_avatar"
                             android:layout_width="80dp"
                             android:layout_height="80dp"
-                            app:cardCornerRadius="40dp"
-                            app:cardElevation="0dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_person"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
                             app:strokeColor="?attr/colorOutlineVariant"
-                            app:strokeWidth="1dp">
-
-                            <ImageView
-                                android:id="@+id/iv_detail_avatar"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:scaleType="centerCrop"
-                                android:src="@drawable/ic_person"
-                                android:contentDescription="Avatar" />
-
-                        </com.google.android.material.card.MaterialCardView>
+                            app:strokeWidth="1dp"
+                            android:contentDescription="Avatar" />
 
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/btn_change_photo"

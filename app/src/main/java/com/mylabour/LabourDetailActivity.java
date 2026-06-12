@@ -70,7 +70,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private ActivityResultLauncher<String> headerImagePickerLauncher;
     private ActivityResultLauncher<String> avatarPickerLauncher;
     private android.widget.ImageView ivHeaderImage;
-    private android.widget.ImageView ivDetailAvatar;
+    private com.google.android.material.imageview.ShapeableImageView ivDetailAvatar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +90,8 @@ public class LabourDetailActivity extends AppCompatActivity {
                     String base64 = encodeToBase64(resized);
                     saveAvatarLocally(base64);
                     ivDetailAvatar.setImageBitmap(resized);
+                    ivDetailAvatar.setPadding(0, 0, 0, 0);
+                    ivDetailAvatar.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
                 } catch (Exception e) {
                     e.printStackTrace();
                     Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
@@ -448,12 +450,21 @@ public class LabourDetailActivity extends AppCompatActivity {
                 byte[] decodedString = Base64.decode(base64, Base64.DEFAULT);
                 Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                 ivDetailAvatar.setImageBitmap(decodedByte);
+                ivDetailAvatar.setPadding(0, 0, 0, 0);
+                ivDetailAvatar.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
             } catch (Exception e) {
-                ivDetailAvatar.setImageResource(R.drawable.ic_person);
+                setDefaultAvatar();
             }
         } else {
-            ivDetailAvatar.setImageResource(R.drawable.ic_person);
+            setDefaultAvatar();
         }
+    }
+
+    private void setDefaultAvatar() {
+        ivDetailAvatar.setImageResource(R.drawable.ic_person);
+        int padding = (int) (16 * getResources().getDisplayMetrics().density);
+        ivDetailAvatar.setPadding(padding, padding, padding, padding);
+        ivDetailAvatar.setScaleType(android.widget.ImageView.ScaleType.CENTER_INSIDE);
     }
 
     private void updateAttendanceRef() {
