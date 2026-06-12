@@ -113,14 +113,71 @@ public class LabourDetailActivity extends AppCompatActivity {
         try {
             document.writeTo(new FileOutputStream(file));
             document.close();
-            shareFile(file);
+            shareReportOptions(file, labour);
         } catch (IOException e) {
             e.printStackTrace();
             Toast.makeText(this, "Failed to generate PDF", Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void shareFile(File file) {
+    private void shareReportOptions(File file, Labour labour) {
+        String[] options = {"Share via WhatsApp", "Share via Email", "Other Share Options"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Share Report with " + labour.name);
+        builder.setItems(options, (dialog, which) -> {
+            switch (which) {
+                case 0:
+                    shareToWhatsApp(file, labour.number);
+                    break;
+                case 1:
+                    shareToEmail(file, labour.email);
+                    break;
+                case 2:
+                    shareFileGeneric(file);
+                    break;
+            }
+        });
+        builder.show();
+    }
+
+    private void shareToWhatsApp(File file, String phoneNumber) {
+        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+        android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+        intent.setType("application/pdf");
+        intent.putExtra(android.content.Intent.EXTRA_STREAM, uri);
+        
+        // Format phone number for WhatsApp (remove non-digits)
+        String cleanNumber = phoneNumber.replaceAll("\\D+", "");
+        if (!cleanNumber.startsWith("91") && cleanNumber.length() == 10) {
+            cleanNumber = "91" + cleanNumber;
+        }
+        
+        intent.putExtra("jid", cleanNumber + "@s.whatsapp.net");
+        intent.setPackage("com.whatsapp");
+        intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        
+        try {
+            startActivity(intent);
+        } catch (android.content.ActivityNotFoundException e) {
+            Toast.makeText(this, "WhatsApp not installed", Toast.LENGTH_SHORT).show();
+            shareFileGeneric(file);
+        }
+    }
+
+    private void shareToEmail(File file, String email) {
+        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+        android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+        intent.setType("application/pdf");
+        intent.putExtra(android.content.Intent.EXTRA_EMAIL, new String[]{email});
+        intent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Work Attendance Report");
+        intent.putExtra(android.content.Intent.EXTRA_TEXT, "Please find attached the attendance and wage report.");
+        intent.putExtra(android.content.Intent.EXTRA_STREAM, uri);
+        intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        
+        startActivity(android.content.Intent.createChooser(intent, "Send Email"));
+    }
+
+    private void shareFileGeneric(File file) {
         Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
         android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
         intent.setType("application/pdf");
