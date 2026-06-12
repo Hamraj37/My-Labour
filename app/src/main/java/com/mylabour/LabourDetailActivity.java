@@ -73,7 +73,11 @@ public class LabourDetailActivity extends AppCompatActivity {
             tvTotalAmount = findViewById(R.id.tv_total_amount);
 
             tvName.setText(labour.name);
-            tvNumber.setText(labour.number);
+            String formattedNumber = labour.number;
+            if (formattedNumber != null && !formattedNumber.startsWith("+91")) {
+                formattedNumber = "+91" + formattedNumber;
+            }
+            tvNumber.setText(formattedNumber);
             tvEmail.setText(labour.email != null && !labour.email.isEmpty() ? labour.email : "N/A");
             tvAddress.setText(labour.address != null && !labour.address.isEmpty() ? labour.address : "N/A");
             tvWage.setText("₹" + formatAmount(dailyWage));
@@ -425,7 +429,11 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         String amount = String.valueOf(totalEarnings);
         String name = currentLabour.name;
-        String upiId = currentLabour.number + "@upi"; // Defaulting to phone@upi
+        String number = currentLabour.number;
+        if (number != null && !number.startsWith("+91")) {
+            number = "+91" + number;
+        }
+        String upiId = number + "@upi"; // Defaulting to phone@upi
         
         Uri uri = Uri.parse("upi://pay").buildUpon()
                 .appendQueryParameter("pa", upiId)
