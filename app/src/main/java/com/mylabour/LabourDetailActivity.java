@@ -40,8 +40,8 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private List<CalendarAdapter.CalendarDay> days;
     private CalendarAdapter adapter;
-    private TextView tvFullDay, tvHalfDay, tvAbsent, tvTotalAmount, tvWage, tvPreviousDue;
-    private View layoutPreviousDue, dividerPrevDue;
+    private TextView tvFullDay, tvHalfDay, tvAbsent, tvTotalAmount, tvWage, tvPreviousDue, tvPaidAmount, tvDueAmount;
+    private View layoutPreviousDue, dividerPrevDue, layoutPaidAmount, dividerPaid, layoutDueAmount, dividerTotal, fabSetPaid;
     private DatabaseReference mAttendanceRef, mLabourRef, mBaseAttendanceRef;
     private ValueEventListener attendanceListener;
     private String labourId;
@@ -50,6 +50,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private String nodeKey;
     private double totalEarnings = 0;
     private double previousMonthDue = 0;
+    private double paidAmountForMonth = 0;
     private Labour currentLabour;
 
     @Override
@@ -79,6 +80,13 @@ public class LabourDetailActivity extends AppCompatActivity {
             tvPreviousDue = findViewById(R.id.tv_previous_due);
             layoutPreviousDue = findViewById(R.id.layout_previous_due);
             dividerPrevDue = findViewById(R.id.divider_prev_due);
+            tvPaidAmount = findViewById(R.id.tv_paid_amount);
+            tvDueAmount = findViewById(R.id.tv_due_amount);
+            layoutPaidAmount = findViewById(R.id.layout_paid_amount);
+            dividerPaid = findViewById(R.id.divider_paid);
+            layoutDueAmount = findViewById(R.id.layout_due_amount);
+            dividerTotal = findViewById(R.id.divider_total);
+            fabSetPaid = findViewById(R.id.fab_set_paid);
 
             tvName.setText(labour.name);
             String number = labour.number;
@@ -102,7 +110,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             findViewById(R.id.btn_prev_month).setOnClickListener(v -> changeMonth(-1));
             findViewById(R.id.btn_next_month).setOnClickListener(v -> changeMonth(1));
             
-            findViewById(R.id.fab_pay).setOnClickListener(v -> initiateUpiPayment());
+            findViewById(R.id.fab_set_paid).setOnClickListener(v -> showSetPaidDialog());
             findViewById(R.id.fab_share).setOnClickListener(v -> {
                 if (currentLabour != null) {
                     generateAndSharePdf(currentLabour);
@@ -296,17 +304,26 @@ public class LabourDetailActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Map<String, String> attendanceMap = new HashMap<>();
                 Double wageForMonth = null;
+                Double paidAmount = null;
                 for (DataSnapshot postSnapshot : snapshot.getChildren()) {
                     String key = postSnapshot.getKey();
+                    if (key == null) continue;
+                    
                     if (key.equals("monthlyWage")) {
                         Object value = postSnapshot.getValue();
-                        if (value instanceof Long) {
-                            wageForMonth = ((Long) value).doubleValue();
-                        } else if (value instanceof Double) {
-                            wageForMonth = (Double) value;
+                        if (value instanceof Number) {
+                            wageForMonth = ((Number) value).doubleValue();
+                        }
+                    } else if (key.equals("paidAmount")) {
+                        Object value = postSnapshot.getValue();
+                        if (value instanceof Number) {
+                            paidAmount = ((Number) value).doubleValue();
                         }
                     } else {
-                        attendanceMap.put(key, postSnapshot.getValue(String.class));
+                        Object value = postSnapshot.getValue();
+                        if (value instanceof String) {
+                            attendanceMap.put(key, (String) value);
+                        }
                     }
                 }
 
@@ -319,6 +336,8 @@ public class LabourDetailActivity extends AppCompatActivity {
                     return;
                 }
                 tvWage.setText("₹" + formatAmount(dailyWage));
+
+                paidAmountForMonth = (paidAmount != null) ? paidAmount : 0;
 
                 // Update days list with data from Firebase
                 for (CalendarAdapter.CalendarDay day : days) {
@@ -485,8 +504,66 @@ public class LabourDetailActivity extends AppCompatActivity {
         tvAbsent.setText(String.valueOf(absentCount));
         
         totalEarnings = totalWorkUnits * dailyWage;
-        double grandTotal = totalEarnings + previousMonthDue;
-        tvTotalAmount.setText("₹" + formatAmount(grandTotal));
+        double grossTotal = totalEarnings + previousMonthDue;
+        double balance = grossTotal - paidAmountForMonth;
+
+        tvTotalAmount.setText("₹" + formatAmount(grossTotal));
+        tvPaidAmount.setText("₹" + formatAmount(paidAmountForMonth));
+        tvDueAmount.setText("₹" + formatAmount(balance));
+
+        if (paidAmountForMonth > 0) {
+            layoutPaidAmount.setVisibility(View.VISIBLE);
+            dividerPaid.setVisibility(View.VISIBLE);
+        } else {
+            layoutPaidAmount.setVisibility(View.GONE);
+            dividerPaid.setVisibility(View.GONE);
+        }
+
+        if (balance > 0) {
+            layoutDueAmount.setVisibility(View.VISIBLE);
+            fabSetPaid.setVisibility(View.VISIBLE);
+        } else {
+            layoutDueAmount.setVisibility(View.GONE);
+            fabSetPaid.setVisibility(View.GONE);
+        }
+
+        if (paidAmountForMonth > 0 || balance > 0) {
+            dividerTotal.setVisibility(View.VISIBLE);
+        } else {
+            dividerTotal.setVisibility(View.GONE);
+        }
+    }
+
+    private void showSetPaidDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Set Amount Paid");
+
+        final android.widget.EditText input = new android.widget.EditText(this);
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        input.setText(formatAmount(paidAmountForMonth));
+        builder.setView(input);
+
+        builder.setPositiveButton("Set", (dialog, which) -> {
+            String paidStr = input.getText().toString().trim();
+            if (!paidStr.isEmpty()) {
+                double paidVal = Double.parseDouble(paidStr);
+                savePaidAmountToFirebase(paidVal);
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
+
+    private void savePaidAmountToFirebase(double amount) {
+        if (mAttendanceRef != null) {
+            mAttendanceRef.child("paidAmount").setValue(amount)
+                    .addOnSuccessListener(aVoid -> {
+                        paidAmountForMonth = amount;
+                        updateSummary();
+                        Toast.makeText(this, "Paid amount updated", Toast.LENGTH_SHORT).show();
+                    });
+        }
     }
 
     private void fetchPreviousMonthDue() {
@@ -499,20 +576,33 @@ public class LabourDetailActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 double prevWorkUnits = 0;
                 double prevWage = 0;
+                double prevPaid = 0;
                 
                 for (DataSnapshot postSnapshot : snapshot.getChildren()) {
                     String key = postSnapshot.getKey();
+                    if (key == null) continue;
+
                     if (key.equals("monthlyWage")) {
                         Object value = postSnapshot.getValue();
-                        if (value instanceof Long) prevWage = ((Long) value).doubleValue();
-                        else if (value instanceof Double) prevWage = (Double) value;
+                        if (value instanceof Number) {
+                            prevWage = ((Number) value).doubleValue();
+                        }
+                    } else if (key.equals("paidAmount")) {
+                        Object value = postSnapshot.getValue();
+                        if (value instanceof Number) {
+                            prevPaid = ((Number) value).doubleValue();
+                        }
                     } else {
-                        String status = postSnapshot.getValue(String.class);
-                        prevWorkUnits += calculateWorkUnits(status);
+                        Object value = postSnapshot.getValue();
+                        if (value instanceof String) {
+                            prevWorkUnits += calculateWorkUnits((String) value);
+                        }
                     }
                 }
                 
-                previousMonthDue = prevWorkUnits * prevWage;
+                previousMonthDue = (prevWorkUnits * prevWage) - prevPaid;
+                if (previousMonthDue < 0) previousMonthDue = 0;
+
                 tvPreviousDue.setText("₹" + formatAmount(previousMonthDue));
                 
                 if (previousMonthDue > 0) {
@@ -547,69 +637,6 @@ public class LabourDetailActivity extends AppCompatActivity {
         return 0;
     }
 
-    private void initiateUpiPayment() {
-        if (currentLabour == null || totalEarnings <= 0) {
-            Toast.makeText(this, "Nothing to pay", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Clean number: remove non-digits and country code for default VPA
-        String cleanNumber = currentLabour.number.replaceAll("\\D+", "");
-        if (cleanNumber.length() > 10 && cleanNumber.startsWith("91")) {
-            cleanNumber = cleanNumber.substring(2);
-        }
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Initiate UPI Payment");
-
-        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
-        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
-        int padding = (int) (20 * getResources().getDisplayMetrics().density);
-        layout.setPadding(padding, padding, padding, padding);
-
-        final android.widget.EditText etUpiId = new android.widget.EditText(this);
-        etUpiId.setHint("UPI ID (e.g. number@upi)");
-        etUpiId.setText(cleanNumber + "@upi");
-        layout.addView(etUpiId);
-
-        final android.widget.EditText etAmount = new android.widget.EditText(this);
-        etAmount.setHint("Amount");
-        etAmount.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        etAmount.setText(String.format(Locale.US, "%.2f", totalEarnings));
-        layout.addView(etAmount);
-
-        builder.setView(layout);
-
-        builder.setPositiveButton("Pay", (dialog, which) -> {
-            String upiId = etUpiId.getText().toString().trim();
-            String amountStr = etAmount.getText().toString().trim();
-            
-            if (upiId.isEmpty() || amountStr.isEmpty()) {
-                Toast.makeText(this, "Please enter UPI ID and Amount", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            Uri uri = Uri.parse("upi://pay").buildUpon()
-                    .appendQueryParameter("pa", upiId)
-                    .appendQueryParameter("pn", currentLabour.name)
-                    .appendQueryParameter("am", amountStr)
-                    .appendQueryParameter("cu", "INR")
-                    .build();
-
-            Intent upiPayIntent = new Intent(Intent.ACTION_VIEW);
-            upiPayIntent.setData(uri);
-
-            Intent chooser = Intent.createChooser(upiPayIntent, "Pay with");
-            if (null != chooser.resolveActivity(getPackageManager())) {
-                startActivity(chooser);
-            } else {
-                Toast.makeText(this, "No UPI app found, please install one to continue", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
-    }
 
     private void copyToClipboard(String text) {
         if (text == null || text.isEmpty()) return;
