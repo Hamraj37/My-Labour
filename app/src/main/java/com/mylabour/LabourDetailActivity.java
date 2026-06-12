@@ -1,5 +1,6 @@
 package com.mylabour;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.pdf.PdfDocument;
@@ -43,6 +44,8 @@ public class LabourDetailActivity extends AppCompatActivity {
     private double dailyWage;
     private Calendar currentCalendar;
     private String nodeKey;
+    private double totalEarnings = 0;
+    private Labour currentLabour;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +57,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         Labour labour = (Labour) getIntent().getSerializableExtra("labour");
+        currentLabour = labour;
 
         if (labour != null) {
             labourId = labour.id;
@@ -82,7 +86,13 @@ public class LabourDetailActivity extends AppCompatActivity {
             findViewById(R.id.layout_edit_wage).setOnClickListener(v -> showEditWageDialog());
             findViewById(R.id.btn_prev_month).setOnClickListener(v -> changeMonth(-1));
             findViewById(R.id.btn_next_month).setOnClickListener(v -> changeMonth(1));
-            findViewById(R.id.fab_share).setOnClickListener(v -> generateAndSharePdf(labour));
+            
+            findViewById(R.id.fab_pay).setOnClickListener(v -> initiateUpiPayment());
+            findViewById(R.id.fab_share).setOnClickListener(v -> {
+                if (currentLabour != null) {
+                    generateAndSharePdf(currentLabour);
+                }
+            });
         }
     }
 
@@ -403,8 +413,36 @@ public class LabourDetailActivity extends AppCompatActivity {
         tvHalfDay.setText(String.valueOf(halfCount));
         tvAbsent.setText(String.valueOf(absentCount));
         
-        double totalEarnings = totalWorkUnits * dailyWage;
+        totalEarnings = totalWorkUnits * dailyWage;
         tvTotalAmount.setText("₹" + formatAmount(totalEarnings));
+    }
+
+    private void initiateUpiPayment() {
+        if (currentLabour == null || totalEarnings <= 0) {
+            Toast.makeText(this, "Nothing to pay", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String amount = String.valueOf(totalEarnings);
+        String name = currentLabour.name;
+        String upiId = currentLabour.number + "@upi"; // Defaulting to phone@upi
+        
+        Uri uri = Uri.parse("upi://pay").buildUpon()
+                .appendQueryParameter("pa", upiId)
+                .appendQueryParameter("pn", name)
+                .appendQueryParameter("am", amount)
+                .appendQueryParameter("cu", "INR")
+                .build();
+
+        Intent upiPayIntent = new Intent(Intent.ACTION_VIEW);
+        upiPayIntent.setData(uri);
+
+        Intent chooser = Intent.createChooser(upiPayIntent, "Pay with");
+        if (null != chooser.resolveActivity(getPackageManager())) {
+            startActivity(chooser);
+        } else {
+            Toast.makeText(this, "No UPI app found, please install one to continue", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private String formatAmount(double amount) {
