@@ -1,6 +1,8 @@
 package com.mylabour;
 
-public class Labour {
+import java.io.Serializable;
+
+public class Labour implements Serializable {
     public String id;
     public String name;
     public String email;

@@ -55,7 +55,11 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         labourList = new ArrayList<>();
-        adapter = new LabourAdapter(labourList);
+        adapter = new LabourAdapter(labourList, labour -> {
+            Intent intent = new Intent(MainActivity.this, LabourDetailActivity.class);
+            intent.putExtra("labour", labour);
+            startActivity(intent);
+        });
         recyclerView.setAdapter(adapter);
 
         fetchLabours();
