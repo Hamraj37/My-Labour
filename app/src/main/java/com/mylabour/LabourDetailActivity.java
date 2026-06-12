@@ -487,30 +487,62 @@ public class LabourDetailActivity extends AppCompatActivity {
             return;
         }
 
-        String amount = String.valueOf(totalEarnings);
-        String name = currentLabour.name;
-        String number = currentLabour.number;
-        if (number != null && !number.startsWith("+91")) {
-            number = "+91" + number;
+        // Clean number: remove non-digits and country code for default VPA
+        String cleanNumber = currentLabour.number.replaceAll("\\D+", "");
+        if (cleanNumber.length() > 10 && cleanNumber.startsWith("91")) {
+            cleanNumber = cleanNumber.substring(2);
         }
-        String upiId = number + "@upi"; // Defaulting to phone@upi
-        
-        Uri uri = Uri.parse("upi://pay").buildUpon()
-                .appendQueryParameter("pa", upiId)
-                .appendQueryParameter("pn", name)
-                .appendQueryParameter("am", amount)
-                .appendQueryParameter("cu", "INR")
-                .build();
 
-        Intent upiPayIntent = new Intent(Intent.ACTION_VIEW);
-        upiPayIntent.setData(uri);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Initiate UPI Payment");
 
-        Intent chooser = Intent.createChooser(upiPayIntent, "Pay with");
-        if (null != chooser.resolveActivity(getPackageManager())) {
-            startActivity(chooser);
-        } else {
-            Toast.makeText(this, "No UPI app found, please install one to continue", Toast.LENGTH_SHORT).show();
-        }
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        layout.setPadding(padding, padding, padding, padding);
+
+        final android.widget.EditText etUpiId = new android.widget.EditText(this);
+        etUpiId.setHint("UPI ID (e.g. number@upi)");
+        etUpiId.setText(cleanNumber + "@upi");
+        layout.addView(etUpiId);
+
+        final android.widget.EditText etAmount = new android.widget.EditText(this);
+        etAmount.setHint("Amount");
+        etAmount.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        etAmount.setText(String.format(Locale.US, "%.2f", totalEarnings));
+        layout.addView(etAmount);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton("Pay", (dialog, which) -> {
+            String upiId = etUpiId.getText().toString().trim();
+            String amountStr = etAmount.getText().toString().trim();
+            
+            if (upiId.isEmpty() || amountStr.isEmpty()) {
+                Toast.makeText(this, "Please enter UPI ID and Amount", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Uri uri = Uri.parse("upi://pay").buildUpon()
+                    .appendQueryParameter("pa", upiId)
+                    .appendQueryParameter("pn", currentLabour.name)
+                    .appendQueryParameter("am", amountStr)
+                    .appendQueryParameter("cu", "INR")
+                    .build();
+
+            Intent upiPayIntent = new Intent(Intent.ACTION_VIEW);
+            upiPayIntent.setData(uri);
+
+            Intent chooser = Intent.createChooser(upiPayIntent, "Pay with");
+            if (null != chooser.resolveActivity(getPackageManager())) {
+                startActivity(chooser);
+            } else {
+                Toast.makeText(this, "No UPI app found, please install one to continue", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
     }
 
     private void copyToClipboard(String text) {
