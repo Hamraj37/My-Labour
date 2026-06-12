@@ -159,12 +159,12 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void showStatusDialog(CalendarAdapter.CalendarDay day, int position) {
-        String[] options = {"Full Day", "Half Day", "Absent", "Reset"};
+        String[] options = {"Double Full Day", "Full Day + Half", "Full Day", "Half Day", "Absent", "Reset"};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Mark Attendance - Day " + day.dayNumber);
         builder.setItems(options, (dialog, which) -> {
             String newStatus;
-            if (which == 3) {
+            if (which == 5) {
                 newStatus = "Default";
             } else {
                 newStatus = options[which];
@@ -185,6 +185,8 @@ public class LabourDetailActivity extends AppCompatActivity {
     private void updateStatusDisplay(CalendarAdapter.CalendarDay day, TextView tvDayStatus) {
         tvDayStatus.setText(day.status.equals("Default") ? "Tap to mark" : day.status);
         switch (day.status) {
+            case "Double Full Day": tvDayStatus.setTextColor(android.graphics.Color.parseColor("#1B5E20")); break;
+            case "Full Day + Half": tvDayStatus.setTextColor(android.graphics.Color.parseColor("#2E7D32")); break;
             case "Full Day": tvDayStatus.setTextColor(android.graphics.Color.parseColor("#2E7D32")); break;
             case "Half Day": tvDayStatus.setTextColor(android.graphics.Color.parseColor("#EF6C00")); break;
             case "Absent": tvDayStatus.setTextColor(android.graphics.Color.parseColor("#C62828")); break;
@@ -193,16 +195,33 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void updateSummary() {
-        int full = 0, half = 0, absent = 0;
+        int fullCount = 0;
+        int halfCount = 0;
+        int absentCount = 0;
+        
         for (CalendarAdapter.CalendarDay day : days) {
             switch (day.status) {
-                case "Full Day": full++; break;
-                case "Half Day": half++; break;
-                case "Absent": absent++; break;
+                case "Double Full Day":
+                    fullCount += 2;
+                    break;
+                case "Full Day + Half":
+                    fullCount += 1;
+                    halfCount += 1;
+                    break;
+                case "Full Day":
+                    fullCount += 1;
+                    break;
+                case "Half Day":
+                    halfCount += 1;
+                    break;
+                case "Absent":
+                    absentCount++;
+                    break;
             }
         }
-        tvFullDay.setText(String.valueOf(full));
-        tvHalfDay.setText(String.valueOf(half));
-        tvAbsent.setText(String.valueOf(absent));
+        
+        tvFullDay.setText(String.valueOf(fullCount));
+        tvHalfDay.setText(String.valueOf(halfCount));
+        tvAbsent.setText(String.valueOf(absentCount));
     }
 }

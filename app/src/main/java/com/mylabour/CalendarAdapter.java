@@ -56,6 +56,14 @@ public class CalendarAdapter extends BaseAdapter {
             
             // Set colors based on status
             switch (day.status) {
+                case "Double Full Day":
+                    card.setCardBackgroundColor(Color.parseColor("#A5D6A7")); // Stronger Green
+                    tvDay.setTextColor(Color.parseColor("#1B5E20"));
+                    break;
+                case "Full Day + Half":
+                    card.setCardBackgroundColor(Color.parseColor("#C8E6C9")); // Medium Green
+                    tvDay.setTextColor(Color.parseColor("#2E7D32"));
+                    break;
                 case "Full Day":
                     card.setCardBackgroundColor(Color.parseColor("#E8F5E9")); // Light Green
                     tvDay.setTextColor(Color.parseColor("#2E7D32"));
