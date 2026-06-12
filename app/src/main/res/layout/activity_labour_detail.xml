@@ -151,7 +151,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="top">
+                    android:gravity="top"
+                    android:layout_marginBottom="16dp">
 
                     <TextView
                         android:layout_width="100dp"
@@ -172,6 +173,45 @@
                         android:textSize="16sp"
                         android:textColor="?attr/colorOnSurface"
                         android:textAlignment="viewEnd"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?attr/colorOutlineVariant"
+                    android:layout_marginBottom="16dp"/>
+
+                <!-- Horizontal Daily Wage Field -->
+                <LinearLayout
+                    android:id="@+id/layout_edit_wage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:text="Daily Wage"
+                        android:textSize="14sp"
+                        android:textColor="?attr/colorOutline"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.05"/>
+
+                    <TextView
+                        android:id="@+id/tv_detail_wage"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="₹0"
+                        android:textSize="16sp"
+                        android:textColor="?attr/colorPrimary"
+                        android:textStyle="bold"
+                        android:textAlignment="viewEnd"
+                        android:padding="8dp"/>
                 </LinearLayout>
 
             </LinearLayout>
@@ -252,7 +292,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="8dp"
+                    android:layout_marginHorizontal="4dp"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="0dp"
                     app:cardBackgroundColor="#FFEBEE">
@@ -276,6 +316,38 @@
                             android:text="Absent"
                             android:textSize="12sp"
                             android:textColor="#C62828"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Total Amount Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#E3F2FD">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:gravity="center">
+                        <TextView
+                            android:id="@+id/tv_total_amount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textColor="#1565C0"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total ₹"
+                            android:textSize="12sp"
+                            android:textColor="#1565C0"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

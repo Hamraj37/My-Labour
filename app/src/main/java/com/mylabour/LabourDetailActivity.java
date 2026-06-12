@@ -27,9 +27,10 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private List<CalendarAdapter.CalendarDay> days;
     private CalendarAdapter adapter;
-    private TextView tvFullDay, tvHalfDay, tvAbsent;
-    private DatabaseReference mAttendanceRef;
+    private TextView tvFullDay, tvHalfDay, tvAbsent, tvTotalAmount, tvWage;
+    private DatabaseReference mAttendanceRef, mLabourRef;
     private String labourId;
+    private double dailyWage;
     private String yearMonth; // e.g., "2023_10"
 
     @Override
@@ -45,22 +46,28 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         if (labour != null) {
             labourId = labour.id;
+            dailyWage = labour.dailyAmount;
             TextView tvName = findViewById(R.id.tv_detail_name);
             TextView tvNumber = findViewById(R.id.tv_detail_number);
             TextView tvEmail = findViewById(R.id.tv_detail_email);
             TextView tvAddress = findViewById(R.id.tv_detail_address);
+            tvWage = findViewById(R.id.tv_detail_wage);
             tvFullDay = findViewById(R.id.tv_full_day_count);
             tvHalfDay = findViewById(R.id.tv_half_day_count);
             tvAbsent = findViewById(R.id.tv_absent_count);
+            tvTotalAmount = findViewById(R.id.tv_total_amount);
 
             tvName.setText(labour.name);
             tvNumber.setText(labour.number);
             tvEmail.setText(labour.email != null && !labour.email.isEmpty() ? labour.email : "N/A");
             tvAddress.setText(labour.address != null && !labour.address.isEmpty() ? labour.address : "N/A");
+            tvWage.setText("₹" + formatAmount(dailyWage));
 
             setupFirebase();
             setupCustomCalendar();
             fetchAttendanceData();
+
+            findViewById(R.id.layout_edit_wage).setOnClickListener(v -> showEditWageDialog());
         }
     }
 
@@ -73,11 +80,46 @@ public class LabourDetailActivity extends AppCompatActivity {
             Calendar cal = Calendar.getInstance();
             yearMonth = cal.get(Calendar.YEAR) + "_" + (cal.get(Calendar.MONTH) + 1);
             
-            mAttendanceRef = FirebaseDatabase.getInstance().getReference("labours")
+            mLabourRef = FirebaseDatabase.getInstance().getReference("labours")
                     .child(nodeKey)
-                    .child(labourId)
-                    .child("attendance")
+                    .child(labourId);
+            
+            mAttendanceRef = mLabourRef.child("attendance")
                     .child(yearMonth);
+        }
+    }
+
+    private void showEditWageDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Edit Daily Wage");
+        
+        final android.widget.EditText input = new android.widget.EditText(this);
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        input.setText(formatAmount(dailyWage));
+        builder.setView(input);
+
+        builder.setPositiveButton("Update", (dialog, which) -> {
+            String newWageStr = input.getText().toString().trim();
+            if (!newWageStr.isEmpty()) {
+                double newWage = Double.parseDouble(newWageStr);
+                updateDailyWage(newWage);
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
+
+    private void updateDailyWage(double newWage) {
+        if (mLabourRef != null) {
+            mLabourRef.child("dailyAmount").setValue(newWage)
+                    .addOnSuccessListener(aVoid -> {
+                        dailyWage = newWage;
+                        tvWage.setText("₹" + formatAmount(dailyWage));
+                        updateSummary();
+                        Toast.makeText(this, "Wage updated", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(this, "Failed to update wage", Toast.LENGTH_SHORT).show());
         }
     }
 
@@ -198,21 +240,26 @@ public class LabourDetailActivity extends AppCompatActivity {
         int fullCount = 0;
         int halfCount = 0;
         int absentCount = 0;
+        double totalWorkUnits = 0;
         
         for (CalendarAdapter.CalendarDay day : days) {
             switch (day.status) {
                 case "Double Full Day":
                     fullCount += 2;
+                    totalWorkUnits += 2.0;
                     break;
                 case "Full Day + Half":
                     fullCount += 1;
                     halfCount += 1;
+                    totalWorkUnits += 1.5;
                     break;
                 case "Full Day":
                     fullCount += 1;
+                    totalWorkUnits += 1.0;
                     break;
                 case "Half Day":
                     halfCount += 1;
+                    totalWorkUnits += 0.5;
                     break;
                 case "Absent":
                     absentCount++;
@@ -223,5 +270,16 @@ public class LabourDetailActivity extends AppCompatActivity {
         tvFullDay.setText(String.valueOf(fullCount));
         tvHalfDay.setText(String.valueOf(halfCount));
         tvAbsent.setText(String.valueOf(absentCount));
+        
+        double totalEarnings = totalWorkUnits * dailyWage;
+        tvTotalAmount.setText("₹" + formatAmount(totalEarnings));
+    }
+
+    private String formatAmount(double amount) {
+        if (amount == (long) amount) {
+            return String.format("%d", (long) amount);
+        } else {
+            return String.format("%s", amount);
+        }
     }
 }
