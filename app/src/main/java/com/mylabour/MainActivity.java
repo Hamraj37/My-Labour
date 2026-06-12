@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -12,6 +13,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -66,6 +68,42 @@ public class MainActivity extends AppCompatActivity {
 
         FloatingActionButton fab = findViewById(R.id.fab_add_labour);
         fab.setOnClickListener(view -> showAddLabourDialog());
+
+        ImageView ivProfile = findViewById(R.id.iv_user_profile);
+        if (currentUser.getPhotoUrl() != null) {
+            ivProfile.setPadding(0, 0, 0, 0);
+            Glide.with(this)
+                    .load(currentUser.getPhotoUrl())
+                    .circleCrop()
+                    .into(ivProfile);
+        } else {
+            // Set padding for placeholder icon to look better
+            int padding = (int) (8 * getResources().getDisplayMetrics().density);
+            ivProfile.setPadding(padding, padding, padding, padding);
+        }
+
+        findViewById(R.id.cv_profile).setOnClickListener(v -> showUserProfile(currentUser));
+    }
+
+    private void showUserProfile(FirebaseUser user) {
+        if (user == null) return;
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Profile Settings");
+        
+        String message = "Name: " + user.getDisplayName() + "\nEmail: " + user.getEmail();
+        builder.setMessage(message);
+
+        builder.setPositiveButton("Logout", (dialog, which) -> {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
+
+        builder.setNegativeButton("Close", null);
+        builder.show();
     }
 
     private void fetchLabours() {
