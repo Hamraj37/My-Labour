@@ -147,9 +147,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showUpdateDialog(String version, String url, String notes) {
+        String message = "A new version of My Labour is available.\n\n" +
+                "Recent Changes:\n" + notes;
         new AlertDialog.Builder(this)
                 .setTitle("New Update Available (" + version + ")")
-                .setMessage(notes)
+                .setMessage(message)
                 .setPositiveButton("Update Now", (dialog, which) -> {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     startActivity(intent);
