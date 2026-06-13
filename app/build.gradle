@@ -13,16 +13,25 @@ android {
 
     signingConfigs {
         release {
-            def props = new Properties()
-            def propFile = rootProject.file('local.properties')
-            if (propFile.exists()) {
-                props.load(new FileInputStream(propFile))
+            def properties = new Properties()
+            def localPropertiesFile = rootProject.file("local.properties")
+            if (localPropertiesFile.exists()) {
+                localPropertiesFile.withInputStream { properties.load(it) }
             }
 
-            storeFile rootProject.file(props['release.keystore'] ?: System.getenv("RELEASE_KEYSTORE_FILE") ?: "key.jks")
-            storePassword props['release.keystore.password'] ?: System.getenv("RELEASE_STORE_PASSWORD")
-            keyAlias props['release.key.alias'] ?: System.getenv("RELEASE_KEY_ALIAS")
-            keyPassword props['release.key.password'] ?: System.getenv("RELEASE_KEY_PASSWORD")
+            def keystoreBase64 = properties.getProperty("RELEASE_KEYSTORE_BASE64") ?: System.getenv("RELEASE_KEYSTORE_BASE64")
+
+            if (keystoreBase64 != null && !keystoreBase64.trim().isEmpty()) {
+                def keystoreFile = rootProject.file("release-key.jks")
+                keystoreFile.bytes = java.util.Base64.getDecoder().decode(keystoreBase64.trim())
+                storeFile keystoreFile
+            } else {
+                storeFile rootProject.file("my-release-key.jks")
+            }
+
+            storePassword = properties.getProperty("RELEASE_STORE_PASSWORD") ?: System.getenv("RELEASE_STORE_PASSWORD")
+            keyAlias = properties.getProperty("RELEASE_KEY_ALIAS") ?: System.getenv("RELEASE_KEY_ALIAS")
+            keyPassword = properties.getProperty("RELEASE_KEY_PASSWORD") ?: System.getenv("RELEASE_KEY_PASSWORD")
         }
     }
 
@@ -42,6 +51,9 @@ android {
             optimization {
                 enable false
             }
+        }
+        debug {
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
