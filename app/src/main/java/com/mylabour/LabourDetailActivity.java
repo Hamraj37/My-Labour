@@ -69,6 +69,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private Labour currentLabour;
     private ActivityResultLauncher<String> headerImagePickerLauncher;
     private ActivityResultLauncher<String> avatarPickerLauncher;
+    private ActivityResultLauncher<Void> cameraLauncher;
     private android.widget.ImageView ivHeaderImage;
     private com.google.android.material.imageview.ShapeableImageView ivDetailAvatar;
 
@@ -99,7 +100,18 @@ public class LabourDetailActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.btn_change_photo).setOnClickListener(v -> avatarPickerLauncher.launch("image/*"));
+        cameraLauncher = registerForActivityResult(new ActivityResultContracts.TakePicturePreview(), bitmap -> {
+            if (bitmap != null) {
+                Bitmap resized = resizeBitmap(bitmap, 400);
+                String base64 = encodeToBase64(resized);
+                saveAvatarLocally(base64);
+                ivDetailAvatar.setImageBitmap(resized);
+                ivDetailAvatar.setPadding(0, 0, 0, 0);
+                ivDetailAvatar.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            }
+        });
+
+        findViewById(R.id.btn_change_photo).setOnClickListener(v -> showPhotoOptionsDialog());
 
         headerImagePickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) {
@@ -258,6 +270,20 @@ public class LabourDetailActivity extends AppCompatActivity {
                 .setMessage("Are you sure you want to delete this labour and all attendance data? This cannot be undone.")
                 .setPositiveButton("Delete", (dialog, which) -> deleteLabour())
                 .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showPhotoOptionsDialog() {
+        String[] options = {"Take Photo", "Choose from Gallery"};
+        new AlertDialog.Builder(this)
+                .setTitle("Change Photo")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        cameraLauncher.launch(null);
+                    } else {
+                        avatarPickerLauncher.launch("image/*");
+                    }
+                })
                 .show();
     }
 
