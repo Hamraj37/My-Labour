@@ -637,6 +637,39 @@
 
                 </LinearLayout>
 
+                <!-- Payment History Section -->
+                <TextView
+                    android:id="@+id/tv_payment_history_label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Payment History"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone"/>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_payment_history"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp"
+                    android:visibility="gone"
+                    android:layout_marginBottom="80dp">
+
+                    <LinearLayout
+                        android:id="@+id/layout_payments_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="8dp" />
+
+                </com.google.android.material.card.MaterialCardView>
+
             </LinearLayout>
 
         </androidx.core.widget.NestedScrollView>
@@ -657,10 +690,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
-            android:text="Set Paid"
+            android:text="Add Payment"
             android:textColor="?attr/colorOnPrimary"
             app:backgroundTint="?attr/colorPrimary"
-            app:icon="@android:drawable/ic_menu_save"
+            app:icon="@android:drawable/ic_menu_add"
             app:iconTint="?attr/colorOnPrimary"
             style="@style/Widget.Material3.ExtendedFloatingActionButton.Primary"/>
 

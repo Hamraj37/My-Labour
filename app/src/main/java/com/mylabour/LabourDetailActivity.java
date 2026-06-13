@@ -19,6 +19,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.GridView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
@@ -57,8 +58,11 @@ public class LabourDetailActivity extends AppCompatActivity {
     private CalendarAdapter adapter;
     private TextView tvFullDay, tvHalfDay, tvAbsent, tvTotalAmount, tvWage, tvPreviousDue, tvPaidAmount, tvDueAmount;
     private View layoutPreviousDue, dividerPrevDue, layoutPaidAmount, dividerPaid, layoutDueAmount, dividerTotal, fabSetPaid;
-    private DatabaseReference mAttendanceRef, mLabourRef, mBaseAttendanceRef;
+    private android.widget.LinearLayout layoutPaymentsList;
+    private View tvPaymentHistoryLabel, cardPaymentHistory;
+    private DatabaseReference mAttendanceRef, mLabourRef, mBaseAttendanceRef, mPaymentsRef;
     private ValueEventListener attendanceListener;
+    private List<Payment> paymentList = new ArrayList<>();
     private String labourId;
     private double dailyWage;
     private Calendar currentCalendar;
@@ -159,6 +163,9 @@ public class LabourDetailActivity extends AppCompatActivity {
             layoutDueAmount = findViewById(R.id.layout_due_amount);
             dividerTotal = findViewById(R.id.divider_total);
             fabSetPaid = findViewById(R.id.fab_set_paid);
+            layoutPaymentsList = findViewById(R.id.layout_payments_list);
+            tvPaymentHistoryLabel = findViewById(R.id.tv_payment_history_label);
+            cardPaymentHistory = findViewById(R.id.card_payment_history);
 
             tvName.setText(labour.name);
             String number = labour.number;
@@ -499,6 +506,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         }
         String yearMonth = currentCalendar.get(Calendar.YEAR) + "_" + (currentCalendar.get(Calendar.MONTH) + 1);
         mAttendanceRef = mBaseAttendanceRef.child(yearMonth);
+        mPaymentsRef = mAttendanceRef.child("payments");
     }
 
     private void changeMonth(int offset) {
@@ -553,7 +561,9 @@ public class LabourDetailActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Map<String, String> attendanceMap = new HashMap<>();
                 Double wageForMonth = null;
-                Double paidAmount = null;
+                Double legacyPaidAmount = null;
+                paymentList.clear();
+                
                 for (DataSnapshot postSnapshot : snapshot.getChildren()) {
                     String key = postSnapshot.getKey();
                     if (key == null) continue;
@@ -566,7 +576,15 @@ public class LabourDetailActivity extends AppCompatActivity {
                     } else if (key.equals("paidAmount")) {
                         Object value = postSnapshot.getValue();
                         if (value instanceof Number) {
-                            paidAmount = ((Number) value).doubleValue();
+                            legacyPaidAmount = ((Number) value).doubleValue();
+                        }
+                    } else if (key.equals("payments")) {
+                        for (DataSnapshot paymentSnapshot : postSnapshot.getChildren()) {
+                            Payment p = paymentSnapshot.getValue(Payment.class);
+                            if (p != null) {
+                                p.id = paymentSnapshot.getKey();
+                                paymentList.add(p);
+                            }
                         }
                     } else {
                         Object value = postSnapshot.getValue();
@@ -586,7 +604,10 @@ public class LabourDetailActivity extends AppCompatActivity {
                 }
                 tvWage.setText("₹" + formatAmount(dailyWage));
 
-                paidAmountForMonth = (paidAmount != null) ? paidAmount : 0;
+                double totalPaidFromList = 0;
+                for (Payment p : paymentList) totalPaidFromList += p.amount;
+                
+                paidAmountForMonth = (legacyPaidAmount != null) ? legacyPaidAmount + totalPaidFromList : totalPaidFromList;
 
                 // Update days list with data from Firebase
                 for (CalendarAdapter.CalendarDay day : days) {
@@ -596,6 +617,7 @@ public class LabourDetailActivity extends AppCompatActivity {
                     }
                 }
                 adapter.notifyDataSetChanged();
+                displayPaymentHistory();
                 updateSummary();
             }
 
@@ -605,6 +627,54 @@ public class LabourDetailActivity extends AppCompatActivity {
             }
         };
         mAttendanceRef.addValueEventListener(attendanceListener);
+    }
+
+    private void displayPaymentHistory() {
+        layoutPaymentsList.removeAllViews();
+        if (paymentList.isEmpty()) {
+            tvPaymentHistoryLabel.setVisibility(View.GONE);
+            cardPaymentHistory.setVisibility(View.GONE);
+            return;
+        }
+
+        tvPaymentHistoryLabel.setVisibility(View.VISIBLE);
+        cardPaymentHistory.setVisibility(View.VISIBLE);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+
+        // Sort payments by timestamp descending
+        paymentList.sort((p1, p2) -> Long.compare(p2.timestamp, p1.timestamp));
+
+        for (Payment payment : paymentList) {
+            View view = getLayoutInflater().inflate(R.layout.item_payment, layoutPaymentsList, false);
+            TextView tvDate = view.findViewById(R.id.tv_payment_date);
+            TextView tvTime = view.findViewById(R.id.tv_payment_time);
+            TextView tvAmount = view.findViewById(R.id.tv_payment_amount);
+            View btnDelete = view.findViewById(R.id.btn_delete_payment);
+
+            tvDate.setText(dateFormat.format(payment.timestamp));
+            tvTime.setText(timeFormat.format(payment.timestamp));
+            tvAmount.setText("₹" + formatAmount(payment.amount));
+
+            btnDelete.setOnClickListener(v -> deletePayment(payment));
+
+            layoutPaymentsList.addView(view);
+        }
+    }
+
+    private void deletePayment(Payment payment) {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Payment")
+                .setMessage("Are you sure you want to delete this payment of ₹" + formatAmount(payment.amount) + "?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    if (mPaymentsRef != null && payment.id != null) {
+                        mPaymentsRef.child(payment.id).removeValue()
+                                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Payment deleted", Toast.LENGTH_SHORT).show());
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void fetchAndSetBaseWageFromLastMonth() {
@@ -785,14 +855,14 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private void showSetPaidDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Set Amount Paid");
+        builder.setTitle("Add Payment");
 
         final android.widget.EditText input = new android.widget.EditText(this);
         input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        input.setText(formatAmount(paidAmountForMonth));
+        input.setHint("Enter amount");
         builder.setView(input);
 
-        builder.setPositiveButton("Set", (dialog, which) -> {
+        builder.setPositiveButton("Add", (dialog, which) -> {
             String paidStr = input.getText().toString().trim();
             if (!paidStr.isEmpty()) {
                 double paidVal = Double.parseDouble(paidStr);
@@ -805,12 +875,12 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void savePaidAmountToFirebase(double amount) {
-        if (mAttendanceRef != null) {
-            mAttendanceRef.child("paidAmount").setValue(amount)
+        if (mPaymentsRef != null) {
+            String id = mPaymentsRef.push().getKey();
+            Payment payment = new Payment(id, amount, System.currentTimeMillis());
+            mPaymentsRef.child(id).setValue(payment)
                     .addOnSuccessListener(aVoid -> {
-                        paidAmountForMonth = amount;
-                        updateSummary();
-                        Toast.makeText(this, "Paid amount updated", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Payment added successfully", Toast.LENGTH_SHORT).show();
                     });
         }
     }
