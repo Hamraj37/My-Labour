@@ -172,7 +172,7 @@
                     </LinearLayout>
 
                     <View
-                        android:id="@+id/divider_total"
+                        android:id="@+id/divider_phone"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:background="?attr/colorOutlineVariant"
@@ -207,7 +207,7 @@
                     </LinearLayout>
 
                     <View
-                        android:id="@+id/divider_total"
+                        android:id="@+id/divider_email"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:background="?attr/colorOutlineVariant"
@@ -242,6 +242,7 @@
                     </LinearLayout>
 
                     <View
+                        android:id="@+id/divider_address"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:background="?attr/colorOutlineVariant"
