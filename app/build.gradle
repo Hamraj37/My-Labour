@@ -11,6 +11,21 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            def props = new Properties()
+            def propFile = rootProject.file('local.properties')
+            if (propFile.exists()) {
+                props.load(new FileInputStream(propFile))
+            }
+
+            storeFile rootProject.file(props['release.keystore'] ?: System.getenv("RELEASE_KEYSTORE_FILE") ?: "key.jks")
+            storePassword props['release.keystore.password'] ?: System.getenv("RELEASE_STORE_PASSWORD")
+            keyAlias props['release.key.alias'] ?: System.getenv("RELEASE_KEY_ALIAS")
+            keyPassword props['release.key.password'] ?: System.getenv("RELEASE_KEY_PASSWORD")
+        }
+    }
+
     defaultConfig {
         applicationId "com.mylabour"
         minSdk 24
@@ -23,6 +38,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             optimization {
                 enable false
             }
