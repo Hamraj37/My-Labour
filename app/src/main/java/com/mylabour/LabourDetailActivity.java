@@ -751,12 +751,17 @@ public class LabourDetailActivity extends AppCompatActivity {
         int firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK) - 1;
         int daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
+        Calendar today = Calendar.getInstance();
+        boolean isCurrentMonth = (cal.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                                 cal.get(Calendar.MONTH) == today.get(Calendar.MONTH));
+
         for (int i = 0; i < firstDayOfWeek; i++) {
             days.add(new CalendarAdapter.CalendarDay(0, ""));
         }
 
         for (int i = 1; i <= daysInMonth; i++) {
-            days.add(new CalendarAdapter.CalendarDay(i, "Default"));
+            boolean isToday = isCurrentMonth && (i == today.get(Calendar.DAY_OF_MONTH));
+            days.add(new CalendarAdapter.CalendarDay(i, "Default", isToday));
         }
 
         adapter = new CalendarAdapter(this, days);

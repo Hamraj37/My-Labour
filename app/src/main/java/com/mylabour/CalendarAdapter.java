@@ -52,10 +52,18 @@ public class CalendarAdapter extends BaseAdapter {
         if (day.dayNumber == 0) {
             tvDay.setText("");
             card.setCardBackgroundColor(Color.TRANSPARENT);
+            card.setStrokeWidth(0);
             dot.setVisibility(View.GONE);
         } else {
             tvDay.setText(String.valueOf(day.dayNumber));
             dot.setVisibility(View.GONE);
+
+            if (day.isToday) {
+                card.setStrokeColor(Color.parseColor("#1976D2")); // Blue border for today
+                card.setStrokeWidth(2 * (int) context.getResources().getDisplayMetrics().density);
+            } else {
+                card.setStrokeWidth(0);
+            }
             
             // Set colors based on status
             String status = day.status;
@@ -87,10 +95,16 @@ public class CalendarAdapter extends BaseAdapter {
     public static class CalendarDay {
         public int dayNumber;
         public String status;
+        public boolean isToday;
 
         public CalendarDay(int dayNumber, String status) {
+            this(dayNumber, status, false);
+        }
+
+        public CalendarDay(int dayNumber, String status, boolean isToday) {
             this.dayNumber = dayNumber;
             this.status = status;
+            this.isToday = isToday;
         }
     }
 }
