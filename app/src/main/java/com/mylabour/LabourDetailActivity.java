@@ -328,6 +328,17 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         // Temporarily hide UI elements not needed in PDF
         if (btnChangePhoto != null) btnChangePhoto.setVisibility(View.INVISIBLE);
+        
+        // Hide delete buttons in payment history
+        List<View> deleteButtons = new ArrayList<>();
+        for (int i = 0; i < layoutPaymentsList.getChildCount(); i++) {
+            View itemView = layoutPaymentsList.getChildAt(i);
+            View btnDelete = itemView.findViewById(R.id.btn_delete_payment);
+            if (btnDelete != null && btnDelete.getVisibility() == View.VISIBLE) {
+                btnDelete.setVisibility(View.INVISIBLE);
+                deleteButtons.add(btnDelete);
+            }
+        }
 
         PdfDocument document = new PdfDocument();
         int footerHeight = 60;
@@ -339,6 +350,9 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         // Restore UI elements
         if (btnChangePhoto != null) btnChangePhoto.setVisibility(View.VISIBLE);
+        for (View btn : deleteButtons) {
+            btn.setVisibility(View.VISIBLE);
+        }
 
         // Add footer text
         Paint paint = new Paint();
