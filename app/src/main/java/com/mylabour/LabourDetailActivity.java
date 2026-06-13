@@ -317,6 +317,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private void generateAndSharePdf(Labour labour) {
         View view = findViewById(R.id.content_to_export);
         View btnChangePhoto = findViewById(R.id.btn_change_photo);
+        GridView calendarGrid = findViewById(R.id.calendar_grid);
         
         int width = view.getWidth();
         int height = view.getHeight();
@@ -340,6 +341,19 @@ public class LabourDetailActivity extends AppCompatActivity {
             }
         }
 
+        // Hide current day border (today highlight)
+        Map<com.google.android.material.card.MaterialCardView, Integer> todayCards = new HashMap<>();
+        if (calendarGrid != null) {
+            for (int i = 0; i < calendarGrid.getChildCount(); i++) {
+                View child = calendarGrid.getChildAt(i);
+                com.google.android.material.card.MaterialCardView card = child.findViewById(R.id.card_day_background);
+                if (card != null && card.getStrokeWidth() > 0) {
+                    todayCards.put(card, card.getStrokeWidth());
+                    card.setStrokeWidth(0);
+                }
+            }
+        }
+
         PdfDocument document = new PdfDocument();
         int footerHeight = 60;
         PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(width, height + footerHeight, 1).create();
@@ -352,6 +366,11 @@ public class LabourDetailActivity extends AppCompatActivity {
         if (btnChangePhoto != null) btnChangePhoto.setVisibility(View.VISIBLE);
         for (View btn : deleteButtons) {
             btn.setVisibility(View.VISIBLE);
+        }
+        
+        // Restore current day border
+        for (Map.Entry<com.google.android.material.card.MaterialCardView, Integer> entry : todayCards.entrySet()) {
+            entry.getKey().setStrokeWidth(entry.getValue());
         }
 
         // Add footer text
