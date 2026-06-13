@@ -40,6 +40,7 @@
         android:textColor="?attr/colorOnSurface"/>
 
     <ScrollView
+        android:id="@+id/scroll_view_notes"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -53,5 +54,30 @@
             android:textSize="14sp"
             android:textColor="?attr/colorOnSurfaceVariant"/>
     </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/layout_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:layout_marginTop="16dp">
+
+        <ProgressBar
+            android:id="@+id/progress_bar_update"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100" />
+
+        <TextView
+            android:id="@+id/tv_progress_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="4dp"
+            android:textSize="12sp"
+            android:text="0%" />
+    </LinearLayout>
 
 </LinearLayout>

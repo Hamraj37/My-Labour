@@ -25,6 +25,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -126,8 +127,23 @@ public class MainActivity extends AppCompatActivity {
 
                     JSONObject jsonObject = new JSONObject(result.toString());
                     String latestVersion = jsonObject.getString("tag_name"); // e.g., "v1.0.0"
-                    String downloadUrl = jsonObject.getString("html_url");
                     String releaseNotes = jsonObject.optString("body", "New version available.");
+                    
+                    String downloadUrl = null;
+                    JSONArray assets = jsonObject.getJSONArray("assets");
+                    for (int i = 0; i < assets.length(); i++) {
+                        JSONObject asset = assets.getJSONObject(i);
+                        if (asset.getString("name").endsWith(".apk")) {
+                            downloadUrl = asset.getString("browser_download_url");
+                            break;
+                        }
+                    }
+
+                    if (downloadUrl == null) {
+                        downloadUrl = jsonObject.getString("html_url");
+                    }
+
+                    final String finalDownloadUrl = downloadUrl;
 
                     // Clean the version strings (removing 'v' if present) for comparison
                     String latestClean = latestVersion.replace("v", "");
@@ -136,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
                     if (currentVersion != null) {
                         String currentClean = currentVersion.replace("v", "");
                         if (!latestClean.equals(currentClean)) {
-                            runOnUiThread(() -> showUpdateDialog(latestVersion, downloadUrl, releaseNotes));
+                            runOnUiThread(() -> showUpdateDialog(latestVersion, finalDownloadUrl, releaseNotes));
                         }
                     }
                 }
@@ -153,17 +169,53 @@ public class MainActivity extends AppCompatActivity {
 
         TextView tvVersion = dialogView.findViewById(R.id.tv_update_version);
         TextView tvNotes = dialogView.findViewById(R.id.tv_update_notes);
+        View scrollViewNotes = dialogView.findViewById(R.id.scroll_view_notes);
+        View layoutProgress = dialogView.findViewById(R.id.layout_progress);
+        ProgressBar progressBar = dialogView.findViewById(R.id.progress_bar_update);
+        TextView tvProgressPercent = dialogView.findViewById(R.id.tv_progress_percent);
 
         tvVersion.setText(getString(R.string.version_format, version));
         tvNotes.setText(notes);
 
-        builder.setPositiveButton(R.string.update_now, (dialog, which) -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-            startActivity(intent);
-        });
+        builder.setPositiveButton(R.string.update_now, null); // Set listener later to prevent closing
         builder.setNegativeButton(R.string.later, null);
         builder.setCancelable(false);
-        builder.show();
+        
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            if (url.endsWith(".apk")) {
+                scrollViewNotes.setVisibility(View.GONE);
+                layoutProgress.setVisibility(View.VISIBLE);
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+
+                new UpdateManager(this).downloadAndInstall(url, new UpdateManager.OnProgressListener() {
+                    @Override
+                    public void onProgress(int progress) {
+                        progressBar.setProgress(progress);
+                        tvProgressPercent.setText(getString(R.string.percent_format, progress));
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        dialog.dismiss();
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+                        scrollViewNotes.setVisibility(View.VISIBLE);
+                        layoutProgress.setVisibility(View.GONE);
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                    }
+                });
+            } else {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                startActivity(intent);
+                dialog.dismiss();
+            }
+        });
     }
 
     @Override
