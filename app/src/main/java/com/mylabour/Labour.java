@@ -9,6 +9,7 @@ public class Labour implements Serializable {
     public String number;
     public String address;
     public double baseWage;
+    public double initialAdvance;
 
     public Labour() {
         // Default constructor required for calls to DataSnapshot.getValue(Labour.class)
@@ -21,5 +22,6 @@ public class Labour implements Serializable {
         this.number = number;
         this.address = address;
         this.baseWage = 0;
+        this.initialAdvance = 0;
     }
 }

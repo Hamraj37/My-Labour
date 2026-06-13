@@ -199,15 +199,18 @@ public class MainActivity extends AppCompatActivity {
         EditText etEmail = dialogView.findViewById(R.id.et_email);
         EditText etNumber = dialogView.findViewById(R.id.et_number);
         EditText etAddress = dialogView.findViewById(R.id.et_address);
+        EditText etInitialAdvance = dialogView.findViewById(R.id.et_initial_advance);
 
         builder.setPositiveButton("Add", (dialog, which) -> {
             String name = etName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
             String number = etNumber.getText().toString().trim();
             String address = etAddress.getText().toString().trim();
+            String advanceStr = etInitialAdvance.getText().toString().trim();
+            double initialAdvance = advanceStr.isEmpty() ? 0 : Double.parseDouble(advanceStr);
 
             if (!name.isEmpty()) {
-                addLabourToFirebase(name, email, number, address);
+                addLabourToFirebase(name, email, number, address, initialAdvance);
             } else {
                 Toast.makeText(MainActivity.this, "Please enter a name", Toast.LENGTH_SHORT).show();
             }
@@ -219,9 +222,10 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void addLabourToFirebase(String name, String email, String number, String address) {
+    private void addLabourToFirebase(String name, String email, String number, String address, double initialAdvance) {
         String id = mDatabase.push().getKey();
         Labour labour = new Labour(id, name, email, number, address);
+        labour.initialAdvance = initialAdvance;
 
         if (id != null) {
             mDatabase.child(id).setValue(labour)

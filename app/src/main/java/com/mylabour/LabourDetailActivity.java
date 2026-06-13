@@ -56,8 +56,8 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private List<CalendarAdapter.CalendarDay> days;
     private CalendarAdapter adapter;
-    private TextView tvFullDay, tvHalfDay, tvAbsent, tvTotalAmount, tvWage, tvPreviousDue, tvPaidAmount, tvDueAmount;
-    private View layoutPreviousDue, dividerPrevDue, layoutPaidAmount, dividerPaid, layoutDueAmount, dividerTotal, fabSetPaid;
+    private TextView tvFullDay, tvHalfDay, tvAbsent, tvTotalAmount, tvWage, tvPreviousDue, tvPaidAmount, tvDueAmount, tvAdvanceAmount, tvPrevDueLabel;
+    private View layoutPreviousDue, dividerPrevDue, layoutPaidAmount, dividerPaid, layoutDueAmount, layoutAdvanceAmount, dividerTotal, fabSetPaid;
     private android.widget.LinearLayout layoutPaymentsList;
     private View tvPaymentHistoryLabel, cardPaymentHistory;
     private DatabaseReference mAttendanceRef, mLabourRef, mBaseAttendanceRef, mPaymentsRef;
@@ -71,6 +71,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private double previousMonthDue = 0;
     private double paidAmountForMonth = 0;
     private Labour currentLabour;
+    private DataSnapshot allAttendanceSnapshot;
     private ActivityResultLauncher<String> headerImagePickerLauncher;
     private ActivityResultLauncher<String> avatarPickerLauncher;
     private ActivityResultLauncher<Void> cameraLauncher;
@@ -154,6 +155,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             tvAbsent = findViewById(R.id.tv_absent_count);
             tvTotalAmount = findViewById(R.id.tv_total_amount);
             tvPreviousDue = findViewById(R.id.tv_previous_due);
+            tvPrevDueLabel = findViewById(R.id.tv_prev_due_label);
             layoutPreviousDue = findViewById(R.id.layout_previous_due);
             dividerPrevDue = findViewById(R.id.divider_prev_due);
             tvPaidAmount = findViewById(R.id.tv_paid_amount);
@@ -161,6 +163,8 @@ public class LabourDetailActivity extends AppCompatActivity {
             layoutPaidAmount = findViewById(R.id.layout_paid_amount);
             dividerPaid = findViewById(R.id.divider_paid);
             layoutDueAmount = findViewById(R.id.layout_due_amount);
+            tvAdvanceAmount = findViewById(R.id.tv_advance_amount);
+            layoutAdvanceAmount = findViewById(R.id.layout_advance_amount);
             dividerTotal = findViewById(R.id.divider_total);
             fabSetPaid = findViewById(R.id.fab_set_paid);
             layoutPaymentsList = findViewById(R.id.layout_payments_list);
@@ -234,20 +238,24 @@ public class LabourDetailActivity extends AppCompatActivity {
         android.widget.EditText etEmail = dialogView.findViewById(R.id.et_email);
         android.widget.EditText etNumber = dialogView.findViewById(R.id.et_number);
         android.widget.EditText etAddress = dialogView.findViewById(R.id.et_address);
+        android.widget.EditText etInitialAdvance = dialogView.findViewById(R.id.et_initial_advance);
 
         etName.setText(currentLabour.name);
         etEmail.setText(currentLabour.email);
         etNumber.setText(currentLabour.number);
         etAddress.setText(currentLabour.address);
+        etInitialAdvance.setText(String.valueOf(currentLabour.initialAdvance));
 
         builder.setPositiveButton("Update", (dialog, which) -> {
             String name = etName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
             String number = etNumber.getText().toString().trim();
             String address = etAddress.getText().toString().trim();
+            String advanceStr = etInitialAdvance.getText().toString().trim();
+            double initialAdvance = advanceStr.isEmpty() ? 0 : Double.parseDouble(advanceStr);
 
             if (!name.isEmpty()) {
-                updateLabourDetails(name, email, number, address);
+                updateLabourDetails(name, email, number, address, initialAdvance);
             } else {
                 Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show();
             }
@@ -257,13 +265,14 @@ public class LabourDetailActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void updateLabourDetails(String name, String email, String number, String address) {
+    private void updateLabourDetails(String name, String email, String number, String address, double initialAdvance) {
         if (mLabourRef != null) {
             Map<String, Object> updates = new HashMap<>();
             updates.put("name", name);
             updates.put("email", email);
             updates.put("number", number);
             updates.put("address", address);
+            updates.put("initialAdvance", initialAdvance);
 
             mLabourRef.updateChildren(updates).addOnSuccessListener(aVoid -> {
                 Toast.makeText(this, "Details updated successfully", Toast.LENGTH_SHORT).show();
@@ -446,6 +455,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             });
             
             mBaseAttendanceRef = mLabourRef.child("attendance");
+            fetchPreviousMonthDue();
             updateAttendanceRef();
         }
     }
@@ -514,7 +524,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         updateAttendanceRef();
         setupCustomCalendar();
         fetchAttendanceData();
-        fetchPreviousMonthDue();
+        calculateAndDisplayPreviousDue();
     }
 
     private void showEditWageDialog() {
@@ -828,7 +838,20 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         tvTotalAmount.setText("₹" + formatAmount(grossTotal));
         tvPaidAmount.setText("₹" + formatAmount(paidAmountForMonth));
-        tvDueAmount.setText("₹" + formatAmount(balance));
+
+        if (balance > 0) {
+            tvDueAmount.setText("₹" + formatAmount(balance));
+            layoutDueAmount.setVisibility(View.VISIBLE);
+            layoutAdvanceAmount.setVisibility(View.GONE);
+        } else if (balance < 0) {
+            tvAdvanceAmount.setText("₹" + formatAmount(Math.abs(balance)));
+            layoutDueAmount.setVisibility(View.GONE);
+            layoutAdvanceAmount.setVisibility(View.VISIBLE);
+        } else {
+            tvDueAmount.setText("₹0");
+            layoutDueAmount.setVisibility(View.VISIBLE);
+            layoutAdvanceAmount.setVisibility(View.GONE);
+        }
 
         if (paidAmountForMonth > 0) {
             layoutPaidAmount.setVisibility(View.VISIBLE);
@@ -845,7 +868,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         }
         fabSetPaid.setVisibility(View.VISIBLE);
 
-        if (paidAmountForMonth > 0 || balance > 0) {
+        if (paidAmountForMonth > 0 || (previousMonthDue < 0 && Math.abs(previousMonthDue) > 0.01)) {
             dividerTotal.setVisibility(View.VISIBLE);
         } else {
             dividerTotal.setVisibility(View.GONE);
@@ -885,58 +908,116 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void fetchPreviousMonthDue() {
-        Calendar prevMonth = (Calendar) currentCalendar.clone();
-        prevMonth.add(Calendar.MONTH, -1);
-        String yearMonth = prevMonth.get(Calendar.YEAR) + "_" + (prevMonth.get(Calendar.MONTH) + 1);
-        
-        mBaseAttendanceRef.child(yearMonth).addListenerForSingleValueEvent(new ValueEventListener() {
+        mBaseAttendanceRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                double prevWorkUnits = 0;
-                double prevWage = 0;
-                double prevPaid = 0;
-                
-                for (DataSnapshot postSnapshot : snapshot.getChildren()) {
-                    String key = postSnapshot.getKey();
-                    if (key == null) continue;
-
-                    if (key.equals("monthlyWage")) {
-                        Object value = postSnapshot.getValue();
-                        if (value instanceof Number) {
-                            prevWage = ((Number) value).doubleValue();
-                        }
-                    } else if (key.equals("paidAmount")) {
-                        Object value = postSnapshot.getValue();
-                        if (value instanceof Number) {
-                            prevPaid = ((Number) value).doubleValue();
-                        }
-                    } else {
-                        Object value = postSnapshot.getValue();
-                        if (value instanceof String) {
-                            prevWorkUnits += calculateWorkUnits((String) value);
-                        }
-                    }
-                }
-                
-                previousMonthDue = (prevWorkUnits * prevWage) - prevPaid;
-                if (previousMonthDue < 0) previousMonthDue = 0;
-
-                tvPreviousDue.setText("₹" + formatAmount(previousMonthDue));
-                
-                if (previousMonthDue > 0) {
-                    layoutPreviousDue.setVisibility(View.VISIBLE);
-                    dividerPrevDue.setVisibility(View.VISIBLE);
-                } else {
-                    layoutPreviousDue.setVisibility(View.GONE);
-                    dividerPrevDue.setVisibility(View.GONE);
-                }
-
-                updateSummary();
+                allAttendanceSnapshot = snapshot;
+                calculateAndDisplayPreviousDue();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         });
+    }
+
+    private void calculateAndDisplayPreviousDue() {
+        if (allAttendanceSnapshot == null) {
+            updateSummary();
+            return;
+        }
+
+        double cumulativeBalance = 0;
+        if (currentLabour != null) {
+            cumulativeBalance -= currentLabour.initialAdvance;
+        }
+
+        List<String> monthKeys = new ArrayList<>();
+        for (DataSnapshot monthSnap : allAttendanceSnapshot.getChildren()) {
+            String key = monthSnap.getKey();
+            if (key != null && key.contains("_")) {
+                monthKeys.add(key);
+            }
+        }
+
+        monthKeys.sort((k1, k2) -> {
+            String[] parts1 = k1.split("_");
+            String[] parts2 = k2.split("_");
+            try {
+                int y1 = Integer.parseInt(parts1[0]);
+                int m1 = Integer.parseInt(parts1[1]);
+                int y2 = Integer.parseInt(parts2[0]);
+                int m2 = Integer.parseInt(parts2[1]);
+                if (y1 != y2) return Integer.compare(y1, y2);
+                return Integer.compare(m1, m2);
+            } catch (Exception e) {
+                return 0;
+            }
+        });
+
+        String currentMonthKey = currentCalendar.get(Calendar.YEAR) + "_" + (currentCalendar.get(Calendar.MONTH) + 1);
+
+        for (String key : monthKeys) {
+            if (key.equals(currentMonthKey)) break;
+
+            DataSnapshot monthSnap = allAttendanceSnapshot.child(key);
+            double monthWorkUnits = 0;
+            double monthWage = 0;
+            double monthPaid = 0;
+
+            // Try to get monthly wage, fallback to base wage
+            Object wageObj = monthSnap.child("monthlyWage").getValue();
+            if (wageObj instanceof Number) {
+                monthWage = ((Number) wageObj).doubleValue();
+            } else if (currentLabour != null) {
+                monthWage = currentLabour.baseWage;
+            }
+
+            // Get paid amount (legacy + payments list)
+            Object paidObj = monthSnap.child("paidAmount").getValue();
+            if (paidObj instanceof Number) {
+                monthPaid += ((Number) paidObj).doubleValue();
+            }
+            
+            DataSnapshot paymentsSnap = monthSnap.child("payments");
+            for (DataSnapshot pSnap : paymentsSnap.getChildren()) {
+                Payment p = pSnap.getValue(Payment.class);
+                if (p != null) monthPaid += p.amount;
+            }
+
+            // Calculate work units
+            for (DataSnapshot daySnap : monthSnap.getChildren()) {
+                String dKey = daySnap.getKey();
+                if (dKey != null && !dKey.equals("monthlyWage") && !dKey.equals("paidAmount") && !dKey.equals("payments")) {
+                    Object status = daySnap.getValue();
+                    if (status instanceof String) {
+                        monthWorkUnits += calculateWorkUnits((String) status);
+                    }
+                }
+            }
+
+            cumulativeBalance += (monthWorkUnits * monthWage) - monthPaid;
+        }
+
+        previousMonthDue = cumulativeBalance;
+
+        if (previousMonthDue > 0) {
+            tvPreviousDue.setText("₹" + formatAmount(previousMonthDue));
+            tvPreviousDue.setTextColor(Color.parseColor("#C62828")); // Red for due
+            tvPrevDueLabel.setText("Prev. Due");
+            layoutPreviousDue.setVisibility(View.VISIBLE);
+            dividerPrevDue.setVisibility(View.VISIBLE);
+        } else if (previousMonthDue < 0) {
+            tvPreviousDue.setText("₹" + formatAmount(Math.abs(previousMonthDue)));
+            tvPreviousDue.setTextColor(Color.parseColor("#2E7D32")); // Green for advance
+            tvPrevDueLabel.setText("Prev. Advance");
+            layoutPreviousDue.setVisibility(View.VISIBLE);
+            dividerPrevDue.setVisibility(View.VISIBLE);
+        } else {
+            layoutPreviousDue.setVisibility(View.GONE);
+            dividerPrevDue.setVisibility(View.GONE);
+        }
+
+        updateSummary();
     }
 
     private double calculateWorkUnits(String status) {
