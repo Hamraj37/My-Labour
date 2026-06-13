@@ -169,26 +169,33 @@ public class MainActivity extends AppCompatActivity {
 
         TextView tvVersion = dialogView.findViewById(R.id.tv_update_version);
         TextView tvNotes = dialogView.findViewById(R.id.tv_update_notes);
-        View scrollViewNotes = dialogView.findViewById(R.id.scroll_view_notes);
+        View layoutRecentChanges = dialogView.findViewById(R.id.layout_recent_changes);
         View layoutProgress = dialogView.findViewById(R.id.layout_progress);
         ProgressBar progressBar = dialogView.findViewById(R.id.progress_bar_update);
         TextView tvProgressPercent = dialogView.findViewById(R.id.tv_progress_percent);
+        View btnUpdateNow = dialogView.findViewById(R.id.btn_update_now);
+        View tvUpdateLater = dialogView.findViewById(R.id.tv_update_later);
 
         tvVersion.setText(getString(R.string.version_format, version));
         tvNotes.setText(notes);
 
-        builder.setPositiveButton(R.string.update_now, null); // Set listener later to prevent closing
-        builder.setNegativeButton(R.string.later, null);
         builder.setCancelable(false);
-        
         AlertDialog dialog = builder.create();
+        
+        // Make background transparent for rounded corners
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        
         dialog.show();
 
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+        tvUpdateLater.setOnClickListener(v -> dialog.dismiss());
+
+        btnUpdateNow.setOnClickListener(v -> {
             if (url.endsWith(".apk")) {
-                scrollViewNotes.setVisibility(View.GONE);
+                layoutRecentChanges.setVisibility(View.GONE);
                 layoutProgress.setVisibility(View.VISIBLE);
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                btnUpdateNow.setEnabled(false);
 
                 new UpdateManager(this).downloadAndInstall(url, new UpdateManager.OnProgressListener() {
                     @Override
@@ -205,9 +212,9 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onError(String message) {
                         Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
-                        scrollViewNotes.setVisibility(View.VISIBLE);
+                        layoutRecentChanges.setVisibility(View.VISIBLE);
                         layoutProgress.setVisibility(View.GONE);
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                        btnUpdateNow.setEnabled(true);
                     }
                 });
             } else {

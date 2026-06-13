@@ -2,58 +2,61 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/bg_update_dialog"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:gravity="center_horizontal">
 
-    <TextView
-        android:id="@+id/tv_update_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/new_update_available"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="?attr/colorOnSurface"/>
+    <ImageView
+        android:layout_width="120dp"
+        android:layout_height="40dp"
+        android:src="@drawable/logo"
+        android:scaleType="fitCenter"
+        android:layout_marginTop="8dp"/>
 
     <TextView
         android:id="@+id/tv_update_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/version_format"
+        android:textColor="#212121"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/layout_recent_changes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:textSize="14sp"
-        android:textColor="?attr/colorPrimary"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/update_message"
-        android:textSize="15sp"
-        android:textColor="?attr/colorOnSurfaceVariant"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/recent_changes"
-        android:textStyle="bold"
-        android:textSize="14sp"
-        android:textColor="?attr/colorOnSurface"/>
-
-    <ScrollView
-        android:id="@+id/scroll_view_notes"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="4dp"
-        android:scrollbars="vertical">
+        android:layout_marginTop="24dp"
+        android:background="@drawable/bg_recent_changes"
+        android:orientation="vertical"
+        android:padding="16dp">
 
         <TextView
-            android:id="@+id/tv_update_notes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/recent_changes"
+            android:textColor="#455A64"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <ScrollView
+            android:id="@+id/scroll_view_notes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="?attr/colorOnSurfaceVariant"/>
-    </ScrollView>
+            android:maxHeight="200dp"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/tv_update_notes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#607D8B"
+                android:textSize="14sp"
+                android:lineSpacingExtra="4dp"/>
+        </ScrollView>
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/layout_progress"
@@ -61,7 +64,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:visibility="gone"
-        android:layout_marginTop="16dp">
+        android:layout_marginTop="24dp">
 
         <ProgressBar
             android:id="@+id/progress_bar_update"
@@ -79,5 +82,30 @@
             android:textSize="12sp"
             android:text="0%" />
     </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_update_now"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="32dp"
+        android:text="@string/update_now"
+        android:textAllCaps="false"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:backgroundTint="#4A69BD"
+        app:cornerRadius="12dp"
+        xmlns:app="http://schemas.android.com/apk/res-auto"/>
+
+    <TextView
+        android:id="@+id/tv_update_later"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:padding="8dp"
+        android:text="@string/update_later"
+        android:textColor="#4A69BD"
+        android:textSize="15sp"
+        android:textStyle="bold" />
 
 </LinearLayout>
