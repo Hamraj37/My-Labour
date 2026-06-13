@@ -147,18 +147,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showUpdateDialog(String version, String url, String notes) {
-        String message = "A new version of My Labour is available.\n\n" +
-                "Recent Changes:\n" + notes;
-        new AlertDialog.Builder(this)
-                .setTitle("New Update Available (" + version + ")")
-                .setMessage(message)
-                .setPositiveButton("Update Now", (dialog, which) -> {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    startActivity(intent);
-                })
-                .setNegativeButton("Later", null)
-                .setCancelable(false)
-                .show();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_update, null);
+        builder.setView(dialogView);
+
+        TextView tvVersion = dialogView.findViewById(R.id.tv_update_version);
+        TextView tvNotes = dialogView.findViewById(R.id.tv_update_notes);
+
+        tvVersion.setText(getString(R.string.version_format, version));
+        tvNotes.setText(notes);
+
+        builder.setPositiveButton(R.string.update_now, (dialog, which) -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
+        });
+        builder.setNegativeButton(R.string.later, null);
+        builder.setCancelable(false);
+        builder.show();
     }
 
     @Override
