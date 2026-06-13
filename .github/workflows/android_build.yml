@@ -70,6 +70,6 @@ jobs:
         files: |
           app/build/outputs/apk/release/*.apk
           app/build/outputs/bundle/release/*.aab
-        generate_release_notes: true
+        generate_release_notes: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
