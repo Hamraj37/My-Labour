@@ -36,13 +36,13 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Build Release APK
+    - name: Build Release APK & Bundle
       env:
         RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
         RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
         RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
         RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-      run: ./gradlew assembleRelease
+      run: ./gradlew assembleRelease bundleRelease
 
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
@@ -50,13 +50,21 @@ jobs:
         name: release-apk
         path: app/build/outputs/apk/release/*.apk
 
+    - name: Upload Release Bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-bundle
+        path: app/build/outputs/bundle/release/*.aab
+
     - name: Create Release
       if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
       uses: softprops/action-gh-release@v2
       with:
         name: Release ${{ steps.get_version.outputs.VERSION_NAME }}
         tag_name: v${{ steps.get_version.outputs.VERSION_NAME }}
-        files: app/build/outputs/apk/release/*.apk
+        files: |
+          app/build/outputs/apk/release/*.apk
+          app/build/outputs/bundle/release/*.aab
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
