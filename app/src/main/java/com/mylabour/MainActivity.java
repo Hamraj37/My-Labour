@@ -1,6 +1,7 @@
 package com.mylabour;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,6 +24,14 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,6 +102,61 @@ public class MainActivity extends AppCompatActivity {
 
         FloatingActionButton fab = findViewById(R.id.fab_add_labour);
         fab.setOnClickListener(view -> showAddLabourDialog());
+
+        checkForUpdates();
+    }
+
+    private void checkForUpdates() {
+        new Thread(() -> {
+            try {
+                URL url = new URL("https://api.github.com/repos/Hamraj37/My-Labour/releases/latest");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("Accept", "application/vnd.github.v3+json");
+                connection.connect();
+
+                if (connection.getResponseCode() == 200) {
+                    InputStream responseBody = connection.getInputStream();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody));
+                    StringBuilder result = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        result.append(line);
+                    }
+
+                    JSONObject jsonObject = new JSONObject(result.toString());
+                    String latestVersion = jsonObject.getString("tag_name"); // e.g., "v1.0.0"
+                    String downloadUrl = jsonObject.getString("html_url");
+                    String releaseNotes = jsonObject.optString("body", "New version available.");
+
+                    // Clean the version strings (removing 'v' if present) for comparison
+                    String latestClean = latestVersion.replace("v", "");
+                    String currentVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+
+                    if (currentVersion != null) {
+                        String currentClean = currentVersion.replace("v", "");
+                        if (!latestClean.equals(currentClean)) {
+                            runOnUiThread(() -> showUpdateDialog(latestVersion, downloadUrl, releaseNotes));
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void showUpdateDialog(String version, String url, String notes) {
+        new AlertDialog.Builder(this)
+                .setTitle("New Update Available (" + version + ")")
+                .setMessage(notes)
+                .setPositiveButton("Update Now", (dialog, which) -> {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    startActivity(intent);
+                })
+                .setNegativeButton("Later", null)
+                .setCancelable(false)
+                .show();
     }
 
     @Override
