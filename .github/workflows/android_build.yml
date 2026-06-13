@@ -58,7 +58,7 @@ jobs:
         path: app/build/outputs/bundle/release/*.aab
 
     - name: Create Release
-      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
       uses: softprops/action-gh-release@v2
       with:
         name: Release v${{ steps.release_info.outputs.VERSION_NAME }}
