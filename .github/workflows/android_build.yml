@@ -22,11 +22,15 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: Get Version Name
-      id: get_version
+    - name: Get Release Info
+      id: release_info
       run: |
         VERSION_NAME=$(grep "versionName" app/build.gradle | awk -F '"' '{print $2}')
+        COMMIT_MESSAGE=$(git log -1 --pretty=%B)
         echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
+        echo "COMMIT_MESSAGE<<EOF" >> $GITHUB_OUTPUT
+        echo "$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Create google-services.json
       env:
@@ -60,8 +64,9 @@ jobs:
       if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
       uses: softprops/action-gh-release@v2
       with:
-        name: Release ${{ steps.get_version.outputs.VERSION_NAME }}
-        tag_name: v${{ steps.get_version.outputs.VERSION_NAME }}
+        name: Release v${{ steps.release_info.outputs.VERSION_NAME }} Latest
+        tag_name: v${{ steps.release_info.outputs.VERSION_NAME }}
+        body: ${{ steps.release_info.outputs.COMMIT_MESSAGE }}
         files: |
           app/build/outputs/apk/release/*.apk
           app/build/outputs/bundle/release/*.aab
