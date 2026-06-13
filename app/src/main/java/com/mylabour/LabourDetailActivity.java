@@ -840,11 +840,10 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         if (balance > 0) {
             layoutDueAmount.setVisibility(View.VISIBLE);
-            fabSetPaid.setVisibility(View.VISIBLE);
         } else {
             layoutDueAmount.setVisibility(View.GONE);
-            fabSetPaid.setVisibility(View.GONE);
         }
+        fabSetPaid.setVisibility(View.VISIBLE);
 
         if (paidAmountForMonth > 0 || balance > 0) {
             dividerTotal.setVisibility(View.VISIBLE);
