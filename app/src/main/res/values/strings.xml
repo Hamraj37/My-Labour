@@ -15,4 +15,10 @@
     <string name="update_now">Update Now</string>
     <string name="update_later">Update Later</string>
     <string name="percent_format">%1$d%%</string>
+    <string name="edit_company_details">Edit Company Details</string>
+    <string name="company_name_hint">Company Name</string>
+    <string name="add_company_details">Add Company Details</string>
+    <string name="logo_preview">Logo Preview</string>
+    <string name="logo_url_hint">Logo URL (Direct Link)</string>
+    <string name="company_details_note">Note: These details are saved locally for report branding.</string>
 </resources>

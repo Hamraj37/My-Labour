@@ -388,12 +388,19 @@ public class MainActivity extends AppCompatActivity {
 
         EditText etCompanyName = dialogView.findViewById(R.id.et_company_name);
         EditText etCompanyLogoUrl = dialogView.findViewById(R.id.et_company_logo_url);
+        View btnSave = dialogView.findViewById(R.id.btn_save_company);
+        View tvCancel = dialogView.findViewById(R.id.tv_cancel_company);
         
         android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
         etCompanyName.setText(prefs.getString("company_name", ""));
         etCompanyLogoUrl.setText(prefs.getString("company_logo_url", ""));
 
-        builder.setPositiveButton("Save", (dialog, which) -> {
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnSave.setOnClickListener(v -> {
             String name = etCompanyName.getText().toString().trim();
             String logoUrl = etCompanyLogoUrl.getText().toString().trim();
             
@@ -403,9 +410,11 @@ public class MainActivity extends AppCompatActivity {
                 .apply();
                 
             Toast.makeText(this, "Company details saved locally", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
         });
 
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+        tvCancel.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 }
