@@ -15,6 +15,15 @@ import android.util.Base64;
 import android.graphics.BitmapFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
+import android.print.PrintDocumentInfo;
+import android.print.PrintManager;
+import android.print.PageRange;
+import android.os.CancellationSignal;
+import android.os.ParcelFileDescriptor;
+import java.io.FileInputStream;
+import java.io.OutputStream;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -194,9 +203,16 @@ public class LabourDetailActivity extends AppCompatActivity {
             findViewById(R.id.btn_next_month).setOnClickListener(v -> changeMonth(1));
             
             findViewById(R.id.fab_set_paid).setOnClickListener(v -> showSetPaidDialog());
+            findViewById(R.id.fab_print).setOnClickListener(v -> {
+                if (currentLabour != null) {
+                    File file = generatePdf(currentLabour);
+                    if (file != null) printPdf(file);
+                }
+            });
             findViewById(R.id.fab_share).setOnClickListener(v -> {
                 if (currentLabour != null) {
-                    generateAndSharePdf(currentLabour);
+                    File file = generatePdf(currentLabour);
+                    if (file != null) shareReportOptions(file, currentLabour);
                 }
             });
         }
@@ -314,7 +330,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void generateAndSharePdf(Labour labour) {
+    private File generatePdf(Labour labour) {
         View view = findViewById(R.id.content_to_export);
         View btnChangePhoto = findViewById(R.id.btn_change_photo);
         GridView calendarGrid = findViewById(R.id.calendar_grid);
@@ -324,7 +340,7 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         if (width <= 0 || height <= 0) {
             Toast.makeText(this, "Content not ready yet", Toast.LENGTH_SHORT).show();
-            return;
+            return null;
         }
 
         // Temporarily hide UI elements not needed in PDF
@@ -392,10 +408,47 @@ public class LabourDetailActivity extends AppCompatActivity {
         try {
             document.writeTo(new FileOutputStream(file));
             document.close();
-            shareReportOptions(file, labour);
+            return file;
         } catch (IOException e) {
             e.printStackTrace();
             Toast.makeText(this, "Failed to generate PDF", Toast.LENGTH_SHORT).show();
+            return null;
+        }
+    }
+
+    private void printPdf(File file) {
+        PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
+        try {
+            PrintDocumentAdapter printAdapter = new PrintDocumentAdapter() {
+                @Override
+                public void onWrite(PageRange[] pages, ParcelFileDescriptor destination, CancellationSignal cancellationSignal, WriteResultCallback callback) {
+                    try (InputStream input = new FileInputStream(file);
+                         OutputStream output = new FileOutputStream(destination.getFileDescriptor())) {
+                        byte[] buf = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = input.read(buf)) > 0) {
+                            output.write(buf, 0, bytesRead);
+                        }
+                        callback.onWriteFinished(new PageRange[]{PageRange.ALL_PAGES});
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onLayout(PrintAttributes oldAttributes, PrintAttributes newAttributes, CancellationSignal cancellationSignal, LayoutResultCallback callback, Bundle extras) {
+                    if (cancellationSignal.isCanceled()) {
+                        callback.onLayoutCancelled();
+                        return;
+                    }
+                    PrintDocumentInfo pdi = new PrintDocumentInfo.Builder(file.getName()).setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT).build();
+                    callback.onLayoutFinished(pdi, true);
+                }
+            };
+            printManager.print("Labour Report - " + file.getName(), printAdapter, null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Failed to print", Toast.LENGTH_SHORT).show();
         }
     }
 
