@@ -23,10 +23,18 @@ jobs:
       id: release_info
       run: |
         VERSION_NAME=$(grep "versionName" app/build.gradle | awk -F '"' '{print $2}')
-        COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+        # Get all commits since the last tag
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        if [ -z "$LAST_TAG" ]; then
+          COMMITS=$(git log --pretty=format:"* %s")
+        else
+          COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:"* %s")
+        fi
+        
         echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
-        echo "COMMIT_MESSAGE<<EOF" >> $GITHUB_OUTPUT
-        echo "$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        echo "### Changes in this release" >> $GITHUB_OUTPUT
+        echo "$COMMITS" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Create google-services.json
@@ -63,7 +71,7 @@ jobs:
       with:
         name: Release v${{ steps.release_info.outputs.VERSION_NAME }}
         tag_name: v${{ steps.release_info.outputs.VERSION_NAME }}
-        body: ${{ steps.release_info.outputs.COMMIT_MESSAGE }}
+        body: ${{ steps.release_info.outputs.CHANGELOG }}
         files: |
           app/build/outputs/apk/release/*.apk
           app/build/outputs/bundle/release/*.aab
