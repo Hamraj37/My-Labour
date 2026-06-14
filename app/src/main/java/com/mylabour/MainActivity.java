@@ -188,6 +188,11 @@ public class MainActivity extends AppCompatActivity {
                     String latestVersion = jsonObject.getString("tag_name"); // e.g., "v1.0.0"
                     String releaseNotes = jsonObject.optString("body", "New version available.");
                     
+                    // Format release notes to show clearly in dialog
+                    // Usually GitHub release notes contain markdown like "* Commit message"
+                    // We'll clean it up slightly if needed
+                    final String formattedNotes = releaseNotes.replace("### Changes in this release", "").trim();
+
                     String downloadUrl = null;
                     JSONArray assets = jsonObject.getJSONArray("assets");
                     for (int i = 0; i < assets.length(); i++) {
@@ -211,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
                     if (currentVersion != null) {
                         String currentClean = currentVersion.replace("v", "");
                         if (!latestClean.equals(currentClean)) {
-                            runOnUiThread(() -> showUpdateDialog(latestVersion, finalDownloadUrl, releaseNotes));
+                            runOnUiThread(() -> showUpdateDialog(latestVersion, finalDownloadUrl, formattedNotes));
                         }
                     }
                 }
