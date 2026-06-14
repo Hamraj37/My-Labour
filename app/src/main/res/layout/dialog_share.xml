@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="28dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:background="?attr/colorSurface">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/share_report"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOutline"
+            android:paddingHorizontal="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="12dp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.05"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_share_whatsapp"
+            style="@style/Widget.Material3.Button.TextButton.Icon"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/share_via_whatsapp"
+            android:gravity="start|center_vertical"
+            android:textColor="?attr/colorOnSurface"
+            app:icon="@android:drawable/ic_menu_send"
+            app:iconTint="#25D366"
+            app:iconSize="22dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textAllCaps="false"
+            android:textSize="15sp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_share_email"
+            style="@style/Widget.Material3.Button.TextButton.Icon"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/share_via_email"
+            android:gravity="start|center_vertical"
+            android:textColor="?attr/colorOnSurface"
+            app:icon="@android:drawable/ic_dialog_email"
+            app:iconTint="?attr/colorOnSurfaceVariant"
+            app:iconSize="22dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textAllCaps="false"
+            android:textSize="15sp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_share_other"
+            style="@style/Widget.Material3.Button.TextButton.Icon"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/other_share_options"
+            android:gravity="start|center_vertical"
+            android:textColor="?attr/colorOnSurface"
+            app:icon="@drawable/ic_share"
+            app:iconTint="?attr/colorOnSurfaceVariant"
+            app:iconSize="22dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textAllCaps="false"
+            android:textSize="15sp"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorOutlineVariant"
+            android:layout_marginVertical="12dp"
+            android:layout_marginHorizontal="12dp"/>
+
+        <TextView
+            android:id="@+id/btn_close_share"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:padding="16dp"
+            android:text="@string/close"
+            android:textColor="?attr/colorPrimary"
+            android:textStyle="bold"
+            android:textSize="15sp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

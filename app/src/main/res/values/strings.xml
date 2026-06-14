@@ -34,4 +34,8 @@
     <string name="delete_labour">Delete Labour</string>
     <string name="company_info_icon">Company Info Icon</string>
     <string name="signature_icon">Signature Icon</string>
+    <string name="share_report">Share Report</string>
+    <string name="share_via_whatsapp">Share via WhatsApp</string>
+    <string name="share_via_email">Share via Email</string>
+    <string name="other_share_options">Other Share Options</string>
 </resources>

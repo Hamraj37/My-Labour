@@ -492,23 +492,33 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void shareReportOptions(File file, Labour labour) {
-        String[] options = {"Share via WhatsApp", "Share via Email", "Other Share Options"};
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Share Report with " + labour.name);
-        builder.setItems(options, (dialog, which) -> {
-            switch (which) {
-                case 0:
-                    shareToWhatsApp(file, labour.number);
-                    break;
-                case 1:
-                    shareToEmail(file, labour.email);
-                    break;
-                case 2:
-                    shareFileGeneric(file);
-                    break;
-            }
+        com.google.android.material.dialog.MaterialAlertDialogBuilder builder = new com.google.android.material.dialog.MaterialAlertDialogBuilder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_share, null);
+        builder.setView(dialogView);
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        dialogView.findViewById(R.id.btn_share_whatsapp).setOnClickListener(v -> {
+            shareToWhatsApp(file, labour.number);
+            dialog.dismiss();
         });
-        builder.show();
+
+        dialogView.findViewById(R.id.btn_share_email).setOnClickListener(v -> {
+            shareToEmail(file, labour.email);
+            dialog.dismiss();
+        });
+
+        dialogView.findViewById(R.id.btn_share_other).setOnClickListener(v -> {
+            shareFileGeneric(file);
+            dialog.dismiss();
+        });
+
+        dialogView.findViewById(R.id.btn_close_share).setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     private void shareToWhatsApp(File file, String phoneNumber) {
