@@ -36,7 +36,7 @@
 
 | Dashboard | Attendance | Reports |
 | :---: | :---: | :---: |
-| ![Dashboard](screenshots/dashboard.png) | ![Attendance](screenshots/attendance.png) | ![Reports](screenshots/reports.png) |
+| <img src="screenshots/dashboard.png" width="200"> | <img src="screenshots/attendance.png" width="200"> | <img src="screenshots/reports.png" width="200"> |
 
 > **Note**: Add your actual screenshot images to the `screenshots/` directory in the root of the project to display them here.
 
