@@ -206,60 +206,96 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void showMoreMenu(View v) {
-        PopupMenu popup = new PopupMenu(this, v);
-        popup.getMenuInflater().inflate(R.menu.menu_labour_detail, popup.getMenu());
-        popup.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.action_delete) {
-                showDeleteConfirmation();
-                return true;
-            } else if (id == R.id.action_edit) {
-                showEditLabourDialog();
-                return true;
-            }
-            return false;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_menu_labour, null);
+        builder.setView(dialogView);
+
+        View menuEdit = dialogView.findViewById(R.id.menu_edit);
+        View menuToggleCompany = dialogView.findViewById(R.id.menu_toggle_company);
+        com.google.android.material.materialswitch.MaterialSwitch switchCompany = dialogView.findViewById(R.id.switch_company);
+        View menuDelete = dialogView.findViewById(R.id.menu_delete);
+        View menuClose = dialogView.findViewById(R.id.menu_close);
+
+        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
+        boolean showCompany = prefs.getBoolean("show_company_header", true);
+        switchCompany.setChecked(showCompany);
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        menuEdit.setOnClickListener(view -> {
+            dialog.dismiss();
+            showEditLabourDialog();
         });
-        popup.show();
+
+        menuToggleCompany.setOnClickListener(view -> {
+            boolean isChecked = !switchCompany.isChecked();
+            switchCompany.setChecked(isChecked);
+            prefs.edit().putBoolean("show_company_header", isChecked).apply();
+            loadCompanyHeader();
+        });
+
+        menuDelete.setOnClickListener(view -> {
+            dialog.dismiss();
+            showDeleteConfirmation();
+        });
+
+        menuClose.setOnClickListener(view -> dialog.dismiss());
+
+        dialog.show();
     }
 
     private void showEditLabourDialog() {
         if (currentLabour == null) return;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Edit Labour Details");
-        
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_labour, null);
         builder.setView(dialogView);
 
+        TextView tvTitle = dialogView.findViewById(R.id.tv_dialog_title);
         android.widget.EditText etName = dialogView.findViewById(R.id.et_name);
         android.widget.EditText etEmail = dialogView.findViewById(R.id.et_email);
         android.widget.EditText etNumber = dialogView.findViewById(R.id.et_number);
         android.widget.EditText etAddress = dialogView.findViewById(R.id.et_address);
         android.widget.EditText etInitialAdvance = dialogView.findViewById(R.id.et_initial_advance);
+        View layoutInitialAdvance = dialogView.findViewById(R.id.layout_initial_advance);
+        View btnSave = dialogView.findViewById(R.id.btn_save_labour);
+        View tvCancel = dialogView.findViewById(R.id.tv_cancel_labour);
 
+        tvTitle.setText("Edit Labour Details");
         etName.setText(currentLabour.name);
         etEmail.setText(currentLabour.email);
         etNumber.setText(currentLabour.number);
         etAddress.setText(currentLabour.address);
-        etInitialAdvance.setText(String.valueOf(currentLabour.initialAdvance));
+        
+        // Hide initial advance for editing as it might cause confusion with attendance balance
+        layoutInitialAdvance.setVisibility(View.GONE);
 
-        builder.setPositiveButton("Update", (dialog, which) -> {
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnSave.setOnClickListener(v -> {
             String name = etName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
             String number = etNumber.getText().toString().trim();
             String address = etAddress.getText().toString().trim();
-            String advanceStr = etInitialAdvance.getText().toString().trim();
-            double initialAdvance = advanceStr.isEmpty() ? 0 : Double.parseDouble(advanceStr);
 
             if (!name.isEmpty()) {
-                updateLabourDetails(name, email, number, address, initialAdvance);
+                // Keep existing initialAdvance
+                updateLabourDetails(name, email, number, address, currentLabour.initialAdvance);
+                dialog.dismiss();
             } else {
                 Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show();
             }
         });
 
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+        tvCancel.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     private void updateLabourDetails(String name, String email, String number, String address, double initialAdvance) {
@@ -1134,12 +1170,14 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private void loadCompanyHeader() {
         android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
+        boolean showCompany = prefs.getBoolean("show_company_header", true);
+        
         String name = prefs.getString("company_name", "");
         String address = prefs.getString("company_address", "");
         String phone1 = prefs.getString("company_phone", "");
         String phone2 = prefs.getString("company_phone_2", "");
 
-        if (!name.isEmpty()) {
+        if (!name.isEmpty() && showCompany) {
             tvHeaderCompanyName.setText(name);
             tvHeaderCompanyAddress.setText(address);
             

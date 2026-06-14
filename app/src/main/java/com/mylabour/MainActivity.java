@@ -280,8 +280,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void showAddLabourDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_add_labour, null);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_labour, null);
         builder.setView(dialogView);
 
         EditText etName = dialogView.findViewById(R.id.et_name);
@@ -289,8 +288,15 @@ public class MainActivity extends AppCompatActivity {
         EditText etNumber = dialogView.findViewById(R.id.et_number);
         EditText etAddress = dialogView.findViewById(R.id.et_address);
         EditText etInitialAdvance = dialogView.findViewById(R.id.et_initial_advance);
+        View btnSave = dialogView.findViewById(R.id.btn_save_labour);
+        View tvCancel = dialogView.findViewById(R.id.tv_cancel_labour);
 
-        builder.setPositiveButton("Add", (dialog, which) -> {
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnSave.setOnClickListener(v -> {
             String name = etName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
             String number = etNumber.getText().toString().trim();
@@ -300,14 +306,14 @@ public class MainActivity extends AppCompatActivity {
 
             if (!name.isEmpty()) {
                 addLabourToFirebase(name, email, number, address, initialAdvance);
+                dialog.dismiss();
             } else {
                 Toast.makeText(MainActivity.this, "Please enter a name", Toast.LENGTH_SHORT).show();
             }
         });
 
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+        tvCancel.setOnClickListener(v -> dialog.dismiss());
 
-        AlertDialog dialog = builder.create();
         dialog.show();
     }
 

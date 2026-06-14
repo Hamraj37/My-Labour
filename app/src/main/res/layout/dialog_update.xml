@@ -1,111 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_update_dialog"
-    android:orientation="vertical"
-    android:padding="24dp"
-    android:gravity="center_horizontal">
-
-    <ImageView
-        android:layout_width="120dp"
-        android:layout_height="40dp"
-        android:src="@drawable/logo"
-        android:scaleType="fitCenter"
-        android:layout_marginTop="8dp"/>
-
-    <TextView
-        android:id="@+id/tv_update_version"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/version_format"
-        android:textColor="#212121"
-        android:textSize="22sp"
-        android:textStyle="bold" />
+    app:cardCornerRadius="28dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
 
     <LinearLayout
-        android:id="@+id/layout_recent_changes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:background="@drawable/bg_recent_changes"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="24dp"
+        android:gravity="center_horizontal"
+        android:background="?attr/colorSurface">
+
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="40dp"
+            android:src="@drawable/logo"
+            android:scaleType="fitCenter"
+            android:layout_marginTop="8dp"
+            android:contentDescription="@string/app_name"/>
 
         <TextView
+            android:id="@+id/tv_update_version"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/recent_changes"
-            android:textColor="#455A64"
-            android:textSize="14sp"
+            android:layout_marginTop="24dp"
+            android:text="@string/version_format"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
-        <ScrollView
-            android:id="@+id/scroll_view_notes"
+        <LinearLayout
+            android:id="@+id/layout_recent_changes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:maxHeight="200dp"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_recent_changes"
+            android:orientation="vertical"
+            android:padding="16dp">
 
             <TextView
-                android:id="@+id/tv_update_notes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/recent_changes"
+                android:textColor="?attr/colorOutline"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <ScrollView
+                android:id="@+id/scroll_view_notes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#607D8B"
-                android:textSize="14sp"
-                android:lineSpacingExtra="4dp"/>
-        </ScrollView>
-    </LinearLayout>
+                android:maxHeight="200dp"
+                android:layout_marginTop="8dp">
 
-    <LinearLayout
-        android:id="@+id/layout_progress"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone"
-        android:layout_marginTop="24dp">
+                <TextView
+                    android:id="@+id/tv_update_notes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="14sp"
+                    android:lineSpacingExtra="4dp"/>
+            </ScrollView>
+        </LinearLayout>
 
-        <ProgressBar
-            android:id="@+id/progress_bar_update"
-            style="?android:attr/progressBarStyleHorizontal"
+        <LinearLayout
+            android:id="@+id/layout_progress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:max="100" />
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="24dp">
+
+            <ProgressBar
+                android:id="@+id/progress_bar_update"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100" />
+
+            <TextView
+                android:id="@+id/tv_progress_percent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="4dp"
+                android:textSize="12sp"
+                android:text="0%" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_update_now"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="32dp"
+            android:text="@string/update_now"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="16dp"/>
 
         <TextView
-            android:id="@+id/tv_progress_percent"
+            android:id="@+id/tv_update_later"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="4dp"
-            android:textSize="12sp"
-            android:text="0%" />
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:padding="8dp"
+            android:text="@string/update_later"
+            android:textColor="?attr/colorPrimary"
+            android:textStyle="bold"
+            android:textSize="15sp" />
+
     </LinearLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_update_now"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="32dp"
-        android:text="@string/update_now"
-        android:textAllCaps="false"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:backgroundTint="#4A69BD"
-        app:cornerRadius="12dp"
-        xmlns:app="http://schemas.android.com/apk/res-auto"/>
-
-    <TextView
-        android:id="@+id/tv_update_later"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp"
-        android:padding="8dp"
-        android:text="@string/update_later"
-        android:textColor="#4A69BD"
-        android:textSize="15sp"
-        android:textStyle="bold" />
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
