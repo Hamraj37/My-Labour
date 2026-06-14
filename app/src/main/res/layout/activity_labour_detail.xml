@@ -63,14 +63,44 @@
                 android:padding="16dp"
                 android:background="?attr/colorSurface">
 
-                <!-- Header Image -->
-                <ImageView
-                    android:id="@+id/iv_header_image"
+                <!-- Company Header (Replaces Header Image) -->
+                <LinearLayout
+                    android:id="@+id/layout_company_header"
                     android:layout_width="match_parent"
-                    android:layout_height="100dp"
-                    android:scaleType="centerInside"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="12dp"
                     android:visibility="gone"
-                    android:layout_marginBottom="16dp" />
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_recent_changes">
+
+                    <TextView
+                        android:id="@+id/tv_header_company_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorPrimary"/>
+
+                    <TextView
+                        android:id="@+id/tv_header_company_address"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="13sp"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:layout_marginTop="2dp"
+                        android:textAlignment="center"/>
+
+                    <TextView
+                        android:id="@+id/tv_header_company_phones"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:layout_marginTop="2dp"/>
+                </LinearLayout>
 
                 <!-- Horizontal Header -->
                 <LinearLayout

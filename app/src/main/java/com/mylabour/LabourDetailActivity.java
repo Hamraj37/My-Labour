@@ -81,10 +81,10 @@ public class LabourDetailActivity extends AppCompatActivity {
     private double paidAmountForMonth = 0;
     private Labour currentLabour;
     private DataSnapshot allAttendanceSnapshot;
-    private ActivityResultLauncher<String> headerImagePickerLauncher;
     private ActivityResultLauncher<String> avatarPickerLauncher;
     private ActivityResultLauncher<Void> cameraLauncher;
-    private android.widget.ImageView ivHeaderImage;
+    private View layoutCompanyHeader;
+    private TextView tvHeaderCompanyName, tvHeaderCompanyAddress, tvHeaderCompanyPhones;
     private com.google.android.material.imageview.ShapeableImageView ivDetailAvatar;
 
     @Override
@@ -92,9 +92,13 @@ public class LabourDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_labour_detail);
 
-        ivHeaderImage = findViewById(R.id.iv_header_image);
+        layoutCompanyHeader = findViewById(R.id.layout_company_header);
+        tvHeaderCompanyName = findViewById(R.id.tv_header_company_name);
+        tvHeaderCompanyAddress = findViewById(R.id.tv_header_company_address);
+        tvHeaderCompanyPhones = findViewById(R.id.tv_header_company_phones);
+        
         ivDetailAvatar = findViewById(R.id.iv_detail_avatar);
-        loadHeaderImage();
+        loadCompanyHeader();
 
         avatarPickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) {
@@ -126,24 +130,6 @@ public class LabourDetailActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btn_change_photo).setOnClickListener(v -> showPhotoOptionsDialog());
-
-        headerImagePickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-            if (uri != null) {
-                try {
-                    InputStream inputStream = getContentResolver().openInputStream(uri);
-                    Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-                    // Resize to a reasonable size for header
-                    Bitmap resized = resizeBitmap(bitmap, 800);
-                    String base64 = encodeToBase64(resized);
-                    saveHeaderImage(base64);
-                    ivHeaderImage.setImageBitmap(resized);
-                    ivHeaderImage.setVisibility(View.VISIBLE);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
 
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
         findViewById(R.id.btn_more).setOnClickListener(this::showMoreMenu);
@@ -228,12 +214,6 @@ public class LabourDetailActivity extends AppCompatActivity {
                 return true;
             } else if (id == R.id.action_edit) {
                 showEditLabourDialog();
-                return true;
-            } else if (id == R.id.action_change_header) {
-                headerImagePickerLauncher.launch("image/*");
-                return true;
-            } else if (id == R.id.action_remove_header) {
-                removeHeaderImage();
                 return true;
             }
             return false;
@@ -1151,31 +1131,31 @@ public class LabourDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void saveHeaderImage(String base64) {
-        getSharedPreferences("Settings", MODE_PRIVATE).edit()
-                .putString("header_image_base64", base64)
-                .apply();
-    }
+    private void loadCompanyHeader() {
+        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
+        String name = prefs.getString("company_name", "");
+        String address = prefs.getString("company_address", "");
+        String phone1 = prefs.getString("company_phone", "");
+        String phone2 = prefs.getString("company_phone_2", "");
 
-    private void removeHeaderImage() {
-        getSharedPreferences("Settings", MODE_PRIVATE).edit()
-                .remove("header_image_base64")
-                .apply();
-        ivHeaderImage.setImageDrawable(null);
-        ivHeaderImage.setVisibility(View.GONE);
-        Toast.makeText(this, "Header image removed", Toast.LENGTH_SHORT).show();
-    }
-
-    private void loadHeaderImage() {
-        String base64 = getSharedPreferences("Settings", MODE_PRIVATE)
-                .getString("header_image_base64", null);
-        if (base64 != null) {
-            byte[] decodedString = Base64.decode(base64, Base64.DEFAULT);
-            Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-            ivHeaderImage.setImageBitmap(decodedByte);
-            ivHeaderImage.setVisibility(View.VISIBLE);
+        if (!name.isEmpty()) {
+            tvHeaderCompanyName.setText(name);
+            tvHeaderCompanyAddress.setText(address);
+            
+            String phoneText = "";
+            if (!phone1.isEmpty()) {
+                phoneText = "Phone: " + phone1;
+                if (!phone2.isEmpty()) {
+                    phoneText += " / " + phone2;
+                }
+            }
+            tvHeaderCompanyPhones.setText(phoneText);
+            
+            layoutCompanyHeader.setVisibility(View.VISIBLE);
+            tvHeaderCompanyAddress.setVisibility(address.isEmpty() ? View.GONE : View.VISIBLE);
+            tvHeaderCompanyPhones.setVisibility(phoneText.isEmpty() ? View.GONE : View.VISIBLE);
         } else {
-            ivHeaderImage.setVisibility(View.GONE);
+            layoutCompanyHeader.setVisibility(View.GONE);
         }
     }
 
