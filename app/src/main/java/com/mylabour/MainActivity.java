@@ -331,6 +331,8 @@ public class MainActivity extends AppCompatActivity {
         com.google.android.material.imageview.ShapeableImageView ivProfile = dialogView.findViewById(R.id.iv_dialog_profile);
         TextView tvName = dialogView.findViewById(R.id.tv_dialog_name);
         TextView tvEmail = dialogView.findViewById(R.id.tv_dialog_email);
+        View btnLogout = dialogView.findViewById(R.id.btn_dialog_logout);
+        View tvClose = dialogView.findViewById(R.id.tv_dialog_close);
 
         tvName.setText(user.getDisplayName() != null ? user.getDisplayName() : "User");
         tvEmail.setText(user.getEmail());
@@ -342,13 +344,21 @@ public class MainActivity extends AppCompatActivity {
                     .into(ivProfile);
         }
 
-        builder.setPositiveButton(R.string.logout, (dialog, which) -> {
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivity(intent);
             finish();
+            dialog.dismiss();
         });
-        builder.setNegativeButton(R.string.close, (dialog, which) -> dialog.dismiss());
-        builder.show();
+
+        tvClose.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 }
