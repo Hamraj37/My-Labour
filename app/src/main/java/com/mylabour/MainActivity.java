@@ -331,6 +331,8 @@ public class MainActivity extends AppCompatActivity {
         com.google.android.material.imageview.ShapeableImageView ivProfile = dialogView.findViewById(R.id.iv_dialog_profile);
         TextView tvName = dialogView.findViewById(R.id.tv_dialog_name);
         TextView tvEmail = dialogView.findViewById(R.id.tv_dialog_email);
+        TextView tvCompanyName = dialogView.findViewById(R.id.tv_company_name);
+        com.google.android.material.button.MaterialButton btnManageCompany = dialogView.findViewById(R.id.btn_manage_company);
         View btnLogout = dialogView.findViewById(R.id.btn_dialog_logout);
         View tvClose = dialogView.findViewById(R.id.tv_dialog_close);
 
@@ -344,10 +346,27 @@ public class MainActivity extends AppCompatActivity {
                     .into(ivProfile);
         }
 
+        // Load Company Details from SharedPreferences
+        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
+        String companyName = prefs.getString("company_name", "");
+        if (!companyName.isEmpty()) {
+            tvCompanyName.setText(companyName);
+            tvCompanyName.setVisibility(View.VISIBLE);
+            btnManageCompany.setText("Edit Company Details");
+        } else {
+            tvCompanyName.setVisibility(View.GONE);
+            btnManageCompany.setText("Add Company Details");
+        }
+
         AlertDialog dialog = builder.create();
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
+
+        btnManageCompany.setOnClickListener(v -> {
+            dialog.dismiss();
+            showEditCompanyDialog();
+        });
 
         btnLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
@@ -360,5 +379,33 @@ public class MainActivity extends AppCompatActivity {
         tvClose.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
+    }
+
+    private void showEditCompanyDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_company, null);
+        builder.setView(dialogView);
+
+        EditText etCompanyName = dialogView.findViewById(R.id.et_company_name);
+        EditText etCompanyLogoUrl = dialogView.findViewById(R.id.et_company_logo_url);
+        
+        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
+        etCompanyName.setText(prefs.getString("company_name", ""));
+        etCompanyLogoUrl.setText(prefs.getString("company_logo_url", ""));
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String name = etCompanyName.getText().toString().trim();
+            String logoUrl = etCompanyLogoUrl.getText().toString().trim();
+            
+            prefs.edit()
+                .putString("company_name", name)
+                .putString("company_logo_url", logoUrl)
+                .apply();
+                
+            Toast.makeText(this, "Company details saved locally", Toast.LENGTH_SHORT).show();
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
     }
 }
