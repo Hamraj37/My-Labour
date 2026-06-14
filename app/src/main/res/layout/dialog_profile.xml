@@ -67,6 +67,26 @@
                 android:textColor="?attr/colorPrimary"
                 android:visibility="gone"/>
 
+            <TextView
+                android:id="@+id/tv_company_address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_marginTop="2dp"
+                android:visibility="gone"
+                android:gravity="center"/>
+
+            <TextView
+                android:id="@+id/tv_company_phones"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_marginTop="2dp"
+                android:visibility="gone"
+                android:gravity="center"/>
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_manage_company"
                 style="@style/Widget.Material3.Button.TextButton"

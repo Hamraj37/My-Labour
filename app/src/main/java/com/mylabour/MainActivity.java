@@ -390,6 +390,8 @@ public class MainActivity extends AppCompatActivity {
         TextView tvName = dialogView.findViewById(R.id.tv_dialog_name);
         TextView tvEmail = dialogView.findViewById(R.id.tv_dialog_email);
         TextView tvCompanyName = dialogView.findViewById(R.id.tv_company_name);
+        TextView tvCompanyAddress = dialogView.findViewById(R.id.tv_company_address);
+        TextView tvCompanyPhones = dialogView.findViewById(R.id.tv_company_phones);
         com.google.android.material.button.MaterialButton btnManageCompany = dialogView.findViewById(R.id.btn_manage_company);
         View btnLogout = dialogView.findViewById(R.id.btn_dialog_logout);
         View tvClose = dialogView.findViewById(R.id.tv_dialog_close);
@@ -407,12 +409,40 @@ public class MainActivity extends AppCompatActivity {
         // Load Company Details from SharedPreferences
         android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
         String companyName = prefs.getString("company_name", "");
+        String companyAddress = prefs.getString("company_address", "");
+        String companyPhone = prefs.getString("company_phone", "");
+        String companyPhone2 = prefs.getString("company_phone_2", "");
+
         if (!companyName.isEmpty()) {
             tvCompanyName.setText(companyName);
             tvCompanyName.setVisibility(View.VISIBLE);
+            
+            if (!companyAddress.isEmpty()) {
+                tvCompanyAddress.setText(companyAddress);
+                tvCompanyAddress.setVisibility(View.VISIBLE);
+            } else {
+                tvCompanyAddress.setVisibility(View.GONE);
+            }
+
+            StringBuilder phones = new StringBuilder();
+            if (!companyPhone.isEmpty()) phones.append(companyPhone);
+            if (!companyPhone2.isEmpty()) {
+                if (phones.length() > 0) phones.append(" / ");
+                phones.append(companyPhone2);
+            }
+            
+            if (phones.length() > 0) {
+                tvCompanyPhones.setText(phones.toString());
+                tvCompanyPhones.setVisibility(View.VISIBLE);
+            } else {
+                tvCompanyPhones.setVisibility(View.GONE);
+            }
+
             btnManageCompany.setText("Edit Company Details");
         } else {
             tvCompanyName.setVisibility(View.GONE);
+            tvCompanyAddress.setVisibility(View.GONE);
+            tvCompanyPhones.setVisibility(View.GONE);
             btnManageCompany.setText("Add Company Details");
         }
 
