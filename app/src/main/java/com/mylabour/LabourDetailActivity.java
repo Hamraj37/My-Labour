@@ -311,7 +311,11 @@ public class LabourDetailActivity extends AppCompatActivity {
                 .setTitle("Change Photo")
                 .setItems(options, (dialog, which) -> {
                     if (which == 0) {
-                        cameraLauncher.launch(null);
+                        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            cameraLauncher.launch(null);
+                        } else {
+                            androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.CAMERA}, 101);
+                        }
                     } else {
                         avatarPickerLauncher.launch("image/*");
                     }
