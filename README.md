@@ -53,11 +53,11 @@
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/My-Labour.git
+   git clone https://github.com/Hamraj37/My-Labour.git
    ```
 2. Open the project in Android Studio.
 3. Connect your Firebase project and add the `google-services.json` file to the `app` folder.
 4. Build and run the app on your device or emulator.
 
 ---
-Developed with ❤️ for efficient workforce management.
+Developed with ❤️ by **Hamraj37**.
