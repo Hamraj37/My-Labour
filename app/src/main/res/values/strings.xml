@@ -24,4 +24,7 @@
     <string name="logo_preview">Logo Preview</string>
     <string name="logo_url_hint">Logo URL (Direct Link)</string>
     <string name="company_details_note">Note: These details are saved locally for report branding.</string>
+    <string name="signature_stamp">Signature / Stamp</string>
+    <string name="select_signature">Select Signature / Stamp</string>
+    <string name="remove_signature">Remove Signature</string>
 </resources>

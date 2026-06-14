@@ -83,6 +83,54 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/signature_stamp"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOutline"
+            android:textAllCaps="true"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/iv_company_signature"
+                android:layout_width="80dp"
+                android:layout_height="60dp"
+                android:scaleType="centerInside"
+                android:background="?attr/colorSurfaceVariant"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Small"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp"
+                android:visibility="gone"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_pick_signature"
+                style="@style/Widget.Material3.Button.TextButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/select_signature"
+                app:icon="@android:drawable/ic_menu_gallery"
+                android:textAllCaps="false"/>
+
+            <ImageButton
+                android:id="@+id/btn_remove_signature"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_delete"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="?attr/colorError"
+                android:visibility="gone"
+                android:contentDescription="@string/remove_signature"/>
+        </LinearLayout>
+
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"

@@ -16,6 +16,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.widget.SearchView;
@@ -32,6 +34,9 @@ import com.google.firebase.database.ValueEventListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import android.graphics.Bitmap;
+import android.util.Base64;
+import java.io.ByteArrayOutputStream;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -47,11 +52,36 @@ public class MainActivity extends AppCompatActivity {
     private LabourAdapter adapter;
     private List<Labour> labourList;
     private ProgressBar progressBar;
+    private String nodeKey;
+    private ActivityResultLauncher<String> signaturePickerLauncher;
+    private String currentSignatureBase64;
+    private com.google.android.material.imageview.ShapeableImageView ivDialogSignature;
+    private View btnRemoveSignature;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        signaturePickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri != null) {
+                try {
+                    InputStream inputStream = getContentResolver().openInputStream(uri);
+                    Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(inputStream);
+                    Bitmap resized = resizeBitmap(bitmap, 400);
+                    currentSignatureBase64 = encodeToBase64(resized);
+                    if (ivDialogSignature != null) {
+                        ivDialogSignature.setImageBitmap(resized);
+                        ivDialogSignature.setVisibility(View.VISIBLE);
+                    }
+                    if (btnRemoveSignature != null) {
+                        btnRemoveSignature.setVisibility(View.VISIBLE);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -64,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String userEmail = currentUser.getEmail();
-        String nodeKey = (userEmail != null) ? userEmail.replace(".", ",") : currentUser.getUid();
+        nodeKey = (userEmail != null) ? userEmail.replace(".", ",") : currentUser.getUid();
         mDatabase = FirebaseDatabase.getInstance().getReference("labours").child(nodeKey);
 
         recyclerView = findViewById(R.id.recycler_view);
@@ -329,6 +359,28 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private Bitmap resizeBitmap(Bitmap image, int maxSize) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        float bitmapRatio = (float) width / (float) height;
+        if (bitmapRatio > 1) {
+            width = maxSize;
+            height = (int) (width / bitmapRatio);
+        } else {
+            height = maxSize;
+            width = (int) (height * bitmapRatio);
+        }
+        return Bitmap.createScaledBitmap(image, width, height, true);
+    }
+
+    private String encodeToBase64(Bitmap image) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        byte[] b = baos.toByteArray();
+        return Base64.encodeToString(b, Base64.DEFAULT);
+    }
+
     private void showProfileDialog(FirebaseUser user) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_profile, null);
@@ -396,6 +448,10 @@ public class MainActivity extends AppCompatActivity {
         EditText etCompanyPhone = dialogView.findViewById(R.id.et_company_phone);
         EditText etCompanyPhone2 = dialogView.findViewById(R.id.et_company_phone_2);
         EditText etCompanyAddress = dialogView.findViewById(R.id.et_company_address);
+        ivDialogSignature = dialogView.findViewById(R.id.iv_company_signature);
+        View btnPickSignature = dialogView.findViewById(R.id.btn_pick_signature);
+        btnRemoveSignature = dialogView.findViewById(R.id.btn_remove_signature);
+        
         View btnSave = dialogView.findViewById(R.id.btn_save_company);
         View tvCancel = dialogView.findViewById(R.id.tv_cancel_company);
         
@@ -404,11 +460,28 @@ public class MainActivity extends AppCompatActivity {
         etCompanyPhone.setText(prefs.getString("company_phone", ""));
         etCompanyPhone2.setText(prefs.getString("company_phone_2", ""));
         etCompanyAddress.setText(prefs.getString("company_address", ""));
+        
+        currentSignatureBase64 = prefs.getString("company_signature", null);
+        if (currentSignatureBase64 != null && !currentSignatureBase64.isEmpty()) {
+            byte[] decodedString = Base64.decode(currentSignatureBase64, Base64.DEFAULT);
+            Bitmap decodedByte = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+            ivDialogSignature.setImageBitmap(decodedByte);
+            ivDialogSignature.setVisibility(View.VISIBLE);
+            btnRemoveSignature.setVisibility(View.VISIBLE);
+        }
 
         AlertDialog dialog = builder.create();
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
+
+        btnPickSignature.setOnClickListener(v -> signaturePickerLauncher.launch("image/*"));
+        
+        btnRemoveSignature.setOnClickListener(v -> {
+            currentSignatureBase64 = null;
+            ivDialogSignature.setVisibility(View.GONE);
+            btnRemoveSignature.setVisibility(View.GONE);
+        });
 
         btnSave.setOnClickListener(v -> {
             String name = etCompanyName.getText().toString().trim();
@@ -421,6 +494,7 @@ public class MainActivity extends AppCompatActivity {
                 .putString("company_phone", phone)
                 .putString("company_phone_2", phone2)
                 .putString("company_address", address)
+                .putString("company_signature", currentSignatureBase64)
                 .apply();
                 
             Toast.makeText(this, "Company details saved locally", Toast.LENGTH_SHORT).show();

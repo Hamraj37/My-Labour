@@ -28,6 +28,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -83,8 +84,9 @@ public class LabourDetailActivity extends AppCompatActivity {
     private DataSnapshot allAttendanceSnapshot;
     private ActivityResultLauncher<String> avatarPickerLauncher;
     private ActivityResultLauncher<Void> cameraLauncher;
-    private View layoutCompanyHeader, dividerCompanyHeader;
+    private View layoutCompanyHeader, dividerCompanyHeader, layoutSignatureExport;
     private TextView tvHeaderCompanyName, tvHeaderCompanyAddress, tvHeaderCompanyPhones;
+    private ImageView ivDetailSignature;
     private com.google.android.material.imageview.ShapeableImageView ivDetailAvatar;
 
     @Override
@@ -98,8 +100,12 @@ public class LabourDetailActivity extends AppCompatActivity {
         tvHeaderCompanyAddress = findViewById(R.id.tv_header_company_address);
         tvHeaderCompanyPhones = findViewById(R.id.tv_header_company_phones);
         
+        layoutSignatureExport = findViewById(R.id.layout_signature_export);
+        ivDetailSignature = findViewById(R.id.iv_detail_signature);
+        
         ivDetailAvatar = findViewById(R.id.iv_detail_avatar);
         loadCompanyHeader();
+        loadSignature();
 
         avatarPickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) {
@@ -1197,6 +1203,24 @@ public class LabourDetailActivity extends AppCompatActivity {
         } else {
             layoutCompanyHeader.setVisibility(View.GONE);
             dividerCompanyHeader.setVisibility(View.GONE);
+        }
+    }
+
+    private void loadSignature() {
+        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
+        String signatureBase64 = prefs.getString("company_signature", null);
+        
+        if (signatureBase64 != null && !signatureBase64.isEmpty()) {
+            try {
+                byte[] decodedString = Base64.decode(signatureBase64, Base64.DEFAULT);
+                Bitmap bitmap = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                ivDetailSignature.setImageBitmap(bitmap);
+                layoutSignatureExport.setVisibility(View.VISIBLE);
+            } catch (Exception e) {
+                layoutSignatureExport.setVisibility(View.GONE);
+            }
+        } else {
+            layoutSignatureExport.setVisibility(View.GONE);
         }
     }
 
