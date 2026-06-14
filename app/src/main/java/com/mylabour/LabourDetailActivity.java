@@ -24,6 +24,7 @@ import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
 import java.io.FileInputStream;
 import java.io.OutputStream;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -793,7 +794,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         paymentList.sort((p1, p2) -> Long.compare(p2.timestamp, p1.timestamp));
 
         for (Payment payment : paymentList) {
-            View view = getLayoutInflater().inflate(R.layout.item_payment, layoutPaymentsList, false);
+            View view = LayoutInflater.from(layoutPaymentsList.getContext()).inflate(R.layout.item_payment, layoutPaymentsList, false);
             TextView tvDate = view.findViewById(R.id.tv_payment_date);
             TextView tvTime = view.findViewById(R.id.tv_payment_time);
             TextView tvAmount = view.findViewById(R.id.tv_payment_amount);
@@ -900,7 +901,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             days.add(new CalendarAdapter.CalendarDay(i, "Default", isToday));
         }
 
-        adapter = new CalendarAdapter(this, days);
+        adapter = new CalendarAdapter(calendarGrid.getContext(), days);
         calendarGrid.setAdapter(adapter);
 
         calendarGrid.setOnItemClickListener((parent, view, position, id) -> {

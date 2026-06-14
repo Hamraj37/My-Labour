@@ -61,7 +61,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="16dp"
-                android:background="?attr/colorSurface">
+                android:background="?attr/colorSurface"
+                android:theme="@style/Theme.MyLabour.LightReport">
 
                 <!-- Company Header (Replaces Header Image) -->
                 <LinearLayout
