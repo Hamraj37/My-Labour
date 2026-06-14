@@ -69,6 +69,7 @@ dependencies {
     implementation libs.firebase.database
     implementation libs.play.services.auth
     implementation libs.glide
+    implementation libs.swiperefreshlayout
     testImplementation libs.junit
     androidTestImplementation libs.espresso.core
     androidTestImplementation libs.ext.junit

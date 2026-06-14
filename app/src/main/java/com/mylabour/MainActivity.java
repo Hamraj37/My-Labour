@@ -21,6 +21,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.widget.SearchView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -52,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private LabourAdapter adapter;
     private List<Labour> labourList;
     private ProgressBar progressBar;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private String nodeKey;
     private ActivityResultLauncher<String> signaturePickerLauncher;
     private String currentSignatureBase64;
@@ -99,6 +101,10 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recycler_view);
         progressBar = findViewById(R.id.progress_bar);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh);
+
+        swipeRefreshLayout.setOnRefreshListener(this::fetchLabours);
+        swipeRefreshLayout.setColorSchemeResources(R.color.purple_500);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         labourList = new ArrayList<>();
@@ -287,8 +293,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void fetchLabours() {
-        progressBar.setVisibility(View.VISIBLE);
-        mDatabase.addValueEventListener(new ValueEventListener() {
+        if (!swipeRefreshLayout.isRefreshing()) {
+            progressBar.setVisibility(View.VISIBLE);
+        }
+        mDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 labourList.clear();
@@ -298,11 +306,13 @@ public class MainActivity extends AppCompatActivity {
                 }
                 adapter.setLabourList(labourList);
                 progressBar.setVisibility(View.GONE);
+                swipeRefreshLayout.setRefreshing(false);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 progressBar.setVisibility(View.GONE);
+                swipeRefreshLayout.setRefreshing(false);
                 Toast.makeText(MainActivity.this, "Failed to load data.", Toast.LENGTH_SHORT).show();
             }
         });
