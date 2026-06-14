@@ -27,4 +27,11 @@
     <string name="signature_stamp">Signature / Stamp</string>
     <string name="select_signature">Select Signature / Stamp</string>
     <string name="remove_signature">Remove Signature</string>
+    <string name="options">Options</string>
+    <string name="edit_labour">Edit Labour</string>
+    <string name="show_company_info">Show Company Info</string>
+    <string name="show_signature_stamp">Show Signature/Stamp</string>
+    <string name="delete_labour">Delete Labour</string>
+    <string name="company_info_icon">Company Info Icon</string>
+    <string name="signature_icon">Signature Icon</string>
 </resources>
