@@ -83,7 +83,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private DataSnapshot allAttendanceSnapshot;
     private ActivityResultLauncher<String> avatarPickerLauncher;
     private ActivityResultLauncher<Void> cameraLauncher;
-    private View layoutCompanyHeader;
+    private View layoutCompanyHeader, dividerCompanyHeader;
     private TextView tvHeaderCompanyName, tvHeaderCompanyAddress, tvHeaderCompanyPhones;
     private com.google.android.material.imageview.ShapeableImageView ivDetailAvatar;
 
@@ -93,6 +93,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_labour_detail);
 
         layoutCompanyHeader = findViewById(R.id.layout_company_header);
+        dividerCompanyHeader = findViewById(R.id.divider_company_header);
         tvHeaderCompanyName = findViewById(R.id.tv_header_company_name);
         tvHeaderCompanyAddress = findViewById(R.id.tv_header_company_address);
         tvHeaderCompanyPhones = findViewById(R.id.tv_header_company_phones);
@@ -1152,10 +1153,12 @@ public class LabourDetailActivity extends AppCompatActivity {
             tvHeaderCompanyPhones.setText(phoneText);
             
             layoutCompanyHeader.setVisibility(View.VISIBLE);
+            dividerCompanyHeader.setVisibility(View.VISIBLE);
             tvHeaderCompanyAddress.setVisibility(address.isEmpty() ? View.GONE : View.VISIBLE);
             tvHeaderCompanyPhones.setVisibility(phoneText.isEmpty() ? View.GONE : View.VISIBLE);
         } else {
             layoutCompanyHeader.setVisibility(View.GONE);
+            dividerCompanyHeader.setVisibility(View.GONE);
         }
     }
 

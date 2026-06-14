@@ -72,8 +72,7 @@
                     android:gravity="center"
                     android:padding="12dp"
                     android:visibility="gone"
-                    android:layout_marginBottom="16dp"
-                    android:background="@drawable/bg_recent_changes">
+                    android:layout_marginBottom="16dp">
 
                     <TextView
                         android:id="@+id/tv_header_company_name"
@@ -101,6 +100,14 @@
                         android:textColor="?attr/colorOnSurfaceVariant"
                         android:layout_marginTop="2dp"/>
                 </LinearLayout>
+
+                <View
+                    android:id="@+id/divider_company_header"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?attr/colorOutlineVariant"
+                    android:layout_marginBottom="24dp"
+                    android:visibility="gone"/>
 
                 <!-- Horizontal Header -->
                 <LinearLayout
