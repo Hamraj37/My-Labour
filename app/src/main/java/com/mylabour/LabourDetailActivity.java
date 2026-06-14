@@ -376,11 +376,12 @@ public class LabourDetailActivity extends AppCompatActivity {
         // Add footer text
         Paint paint = new Paint();
         paint.setColor(Color.GRAY);
-        paint.setTextSize(14);
+        paint.setTextSize(12);
         paint.setAntiAlias(true);
         paint.setTextAlign(Paint.Align.CENTER);
+        paint.setFakeBoldText(true);
         
-        canvas.drawText("Labour Report - " + labour.name, width / 2f, height + (footerHeight / 2f) + 10, paint);
+        canvas.drawText("Powered by My Labour", width / 2f, height + (footerHeight / 2f) + 5, paint);
 
         document.finishPage(page);
 
