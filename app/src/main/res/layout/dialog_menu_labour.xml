@@ -71,6 +71,42 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/menu_toggle_signature"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_edit"
+                app:tint="?attr/colorOnSurfaceVariant"
+                android:contentDescription="Toggle Signature"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:text="Show Signature/Stamp"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp"/>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_signature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"/>
+
+        </LinearLayout>
+
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"

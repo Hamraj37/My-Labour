@@ -219,12 +219,17 @@ public class LabourDetailActivity extends AppCompatActivity {
         View menuEdit = dialogView.findViewById(R.id.menu_edit);
         View menuToggleCompany = dialogView.findViewById(R.id.menu_toggle_company);
         com.google.android.material.materialswitch.MaterialSwitch switchCompany = dialogView.findViewById(R.id.switch_company);
+        View menuToggleSignature = dialogView.findViewById(R.id.menu_toggle_signature);
+        com.google.android.material.materialswitch.MaterialSwitch switchSignature = dialogView.findViewById(R.id.switch_signature);
         View menuDelete = dialogView.findViewById(R.id.menu_delete);
         View menuClose = dialogView.findViewById(R.id.menu_close);
 
         android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
         boolean showCompany = prefs.getBoolean("show_company_header", true);
         switchCompany.setChecked(showCompany);
+        
+        boolean showSignature = prefs.getBoolean("show_signature", true);
+        switchSignature.setChecked(showSignature);
 
         AlertDialog dialog = builder.create();
         if (dialog.getWindow() != null) {
@@ -241,6 +246,13 @@ public class LabourDetailActivity extends AppCompatActivity {
             switchCompany.setChecked(isChecked);
             prefs.edit().putBoolean("show_company_header", isChecked).apply();
             loadCompanyHeader();
+        });
+
+        menuToggleSignature.setOnClickListener(view -> {
+            boolean isChecked = !switchSignature.isChecked();
+            switchSignature.setChecked(isChecked);
+            prefs.edit().putBoolean("show_signature", isChecked).apply();
+            loadSignature();
         });
 
         menuDelete.setOnClickListener(view -> {
@@ -1209,8 +1221,9 @@ public class LabourDetailActivity extends AppCompatActivity {
     private void loadSignature() {
         android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
         String signatureBase64 = prefs.getString("company_signature", null);
+        boolean showSignature = prefs.getBoolean("show_signature", true);
         
-        if (signatureBase64 != null && !signatureBase64.isEmpty()) {
+        if (signatureBase64 != null && !signatureBase64.isEmpty() && showSignature) {
             try {
                 byte[] decodedString = Base64.decode(signatureBase64, Base64.DEFAULT);
                 Bitmap bitmap = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
