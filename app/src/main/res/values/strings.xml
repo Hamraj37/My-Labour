@@ -17,6 +17,9 @@
     <string name="percent_format">%1$d%%</string>
     <string name="edit_company_details">Edit Company Details</string>
     <string name="company_name_hint">Company Name</string>
+    <string name="company_address_hint">Company Address</string>
+    <string name="company_phone_hint">Primary Phone Number</string>
+    <string name="company_phone_2_hint">Secondary Phone Number (Optional)</string>
     <string name="add_company_details">Add Company Details</string>
     <string name="logo_preview">Logo Preview</string>
     <string name="logo_url_hint">Logo URL (Direct Link)</string>

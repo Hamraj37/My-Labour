@@ -23,30 +23,6 @@
             android:textColor="?attr/colorPrimary"
             android:layout_marginBottom="24dp"/>
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/iv_dialog_company_logo"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_gravity="center"
-            android:layout_marginBottom="12dp"
-            android:src="@drawable/logo"
-            android:scaleType="centerCrop"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/colorSurfaceVariant"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
-            app:strokeColor="?attr/colorOutlineVariant"
-            app:strokeWidth="1dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/logo_preview"
-            android:layout_gravity="center"
-            android:textSize="12sp"
-            android:textColor="?attr/colorOutline"
-            android:layout_marginBottom="24dp"/>
-
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -64,17 +40,46 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/logo_url_hint"
+            android:hint="@string/company_phone_hint"
             android:layout_marginTop="16dp"
-            app:helperText="Enter a direct image URL (e.g. .jpg, .png)"
-            app:startIconDrawable="@android:drawable/ic_menu_gallery"
+            app:startIconDrawable="@android:drawable/ic_menu_call"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/et_company_logo_url"
+                android:id="@+id/et_company_phone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textUri" />
+                android:inputType="phone" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/company_phone_2_hint"
+            android:layout_marginTop="16dp"
+            app:startIconDrawable="@android:drawable/ic_menu_call"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_company_phone_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="phone" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/company_address_hint"
+            android:layout_marginTop="16dp"
+            app:startIconDrawable="@android:drawable/ic_dialog_map"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_company_address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPostalAddress" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
