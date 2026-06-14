@@ -173,6 +173,7 @@ public class MainActivity extends AppCompatActivity {
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
                 connection.setRequestProperty("Accept", "application/vnd.github.v3+json");
+                connection.setRequestProperty("User-Agent", "My-Labour-App");
                 connection.connect();
 
                 if (connection.getResponseCode() == 200) {
@@ -214,14 +215,16 @@ public class MainActivity extends AppCompatActivity {
                     String currentVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
 
                     if (currentVersion != null) {
-                        String currentClean = currentVersion.replace("v", "");
+                        String currentClean = currentVersion.replace("v", "").trim();
                         if (!latestClean.equals(currentClean)) {
                             runOnUiThread(() -> showUpdateDialog(latestVersion, finalDownloadUrl, formattedNotes));
                         }
                     }
+                } else {
+                    android.util.Log.e("UpdateCheck", "Server returned: " + connection.getResponseCode());
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                android.util.Log.e("UpdateCheck", "Error checking for updates", e);
             }
         }).start();
     }
