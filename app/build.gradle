@@ -70,6 +70,7 @@ dependencies {
     implementation libs.play.services.auth
     implementation libs.glide
     implementation libs.swiperefreshlayout
+    implementation libs.work.runtime
     testImplementation libs.junit
     androidTestImplementation libs.espresso.core
     androidTestImplementation libs.ext.junit
