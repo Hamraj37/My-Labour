@@ -447,8 +447,22 @@ public class LabourDetailActivity extends AppCompatActivity {
         
         String verificationHash = generateVerificationHash(labour, grossTotal, balance);
         
+        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs_" + nodeKey, MODE_PRIVATE);
+        String companyName = prefs.getString("company_name", "");
+        String companyPhone = prefs.getString("company_phone", "");
+
         StringBuilder qrDataBuilder = new StringBuilder();
         qrDataBuilder.append("VERIFY REPORT\n");
+        if (!companyName.isEmpty()) {
+            qrDataBuilder.append("From: ").append(companyName).append("\n");
+        }
+        if (!companyPhone.isEmpty()) {
+            qrDataBuilder.append("Co. Phone: ").append(companyPhone).append("\n");
+        }
+        
+        SimpleDateFormat monthYearSdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
+        qrDataBuilder.append("Month: ").append(monthYearSdf.format(currentCalendar.getTime())).append("\n");
+
         qrDataBuilder.append("Name: ").append(labour.name).append("\n");
         if (labour.number != null && !labour.number.isEmpty()) {
             qrDataBuilder.append("Phone: ").append(labour.number).append("\n");
@@ -1385,8 +1399,9 @@ public class LabourDetailActivity extends AppCompatActivity {
     private String generateVerificationHash(Labour labour, double totalEarnings, double due) {
         try {
             // Include more fields in the hash to detect any edits in the report
+            String monthKey = currentCalendar.get(Calendar.YEAR) + "_" + (currentCalendar.get(Calendar.MONTH) + 1);
             String attendanceData = tvFullDay.getText().toString() + "|" + tvHalfDay.getText().toString() + "|" + tvAbsent.getText().toString();
-            String data = labour.id + "|" + labour.name + "|" + attendanceData + "|" + 
+            String data = labour.id + "|" + labour.name + "|" + monthKey + "|" + attendanceData + "|" +
                           String.format(Locale.US, "%.2f", totalEarnings) + "|" + 
                           String.format(Locale.US, "%.2f", due);
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
