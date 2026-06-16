@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Bundle;
@@ -61,6 +62,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.common.BitMatrix;
+import java.security.MessageDigest;
 
 public class LabourDetailActivity extends AppCompatActivity {
 
@@ -430,6 +436,47 @@ public class LabourDetailActivity extends AppCompatActivity {
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setFakeBoldText(true);
 
+        // Generate verification QR code data
+        int fullDays = Integer.parseInt(tvFullDay.getText().toString());
+        int halfDays = Integer.parseInt(tvHalfDay.getText().toString());
+        int absent = Integer.parseInt(tvAbsent.getText().toString());
+        
+        double grossTotal = totalEarnings + previousMonthDue;
+        double balance = grossTotal - paidAmountForMonth;
+        
+        String verificationHash = generateVerificationHash(labour, grossTotal, balance);
+        
+        StringBuilder qrDataBuilder = new StringBuilder();
+        qrDataBuilder.append("VERIFY REPORT\n");
+        qrDataBuilder.append("Name: ").append(labour.name).append("\n");
+        if (labour.number != null && !labour.number.isEmpty()) {
+            qrDataBuilder.append("Phone: ").append(labour.number).append("\n");
+        }
+        qrDataBuilder.append("Attendance: ").append(fullDays).append("F, ")
+                     .append(halfDays).append("H, ")
+                     .append(absent).append("A\n");
+        
+        if (previousMonthDue != 0) {
+            String label = previousMonthDue > 0 ? "Prev Due: " : "Prev Adv: ";
+            qrDataBuilder.append(label).append("₹").append(formatAmount(Math.abs(previousMonthDue))).append("\n");
+        }
+        
+        qrDataBuilder.append("Month Earn: ₹").append(formatAmount(totalEarnings)).append("\n");
+        qrDataBuilder.append("Gross Total: ₹").append(formatAmount(grossTotal)).append("\n");
+        qrDataBuilder.append("Total Paid: ₹").append(formatAmount(paidAmountForMonth)).append("\n");
+        
+        if (balance > 0) {
+            qrDataBuilder.append("Net Due: ₹").append(formatAmount(balance)).append("\n");
+        } else if (balance < 0) {
+            qrDataBuilder.append("Net Advance: ₹").append(formatAmount(Math.abs(balance))).append("\n");
+        } else {
+            qrDataBuilder.append("Status: Settled\n");
+        }
+        
+        qrDataBuilder.append("Hash: ").append(verificationHash);
+        
+        Bitmap qrBitmap = generateQRCode(qrDataBuilder.toString(), 200);
+
         for (int i = 0; i < totalPages; i++) {
             PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(width, pageHeight, i + 1).create();
             PdfDocument.Page page = document.startPage(pageInfo);
@@ -449,6 +496,21 @@ public class LabourDetailActivity extends AppCompatActivity {
             // Add footer text
             String footerText = "Powered by My Labour - Page " + (i + 1) + " of " + totalPages;
             canvas.drawText(footerText, width / 2f, pageHeight - (footerHeight / 2f) + 5, paint);
+
+            // Draw QR Code in the bottom right corner of the footer
+            if (qrBitmap != null) {
+                int qrSize = 40;
+                int qrMargin = 5;
+                Rect srcRect = new Rect(0, 0, qrBitmap.getWidth(), qrBitmap.getHeight());
+                Rect destRect = new Rect(width - qrSize - qrMargin, pageHeight - qrSize - qrMargin, width - qrMargin, pageHeight - qrMargin);
+                canvas.drawBitmap(qrBitmap, srcRect, destRect, null);
+                
+                Paint qrLabelPaint = new Paint();
+                qrLabelPaint.setColor(Color.GRAY);
+                qrLabelPaint.setTextSize(6);
+                qrLabelPaint.setTextAlign(Paint.Align.RIGHT);
+                canvas.drawText("Verify Report", width - qrSize - qrMargin - 2, pageHeight - (qrSize/2f), qrLabelPaint);
+            }
 
             document.finishPage(page);
         }
@@ -1297,5 +1359,43 @@ public class LabourDetailActivity extends AppCompatActivity {
         image.compress(Bitmap.CompressFormat.JPEG, 70, baos);
         byte[] b = baos.toByteArray();
         return Base64.encodeToString(b, Base64.DEFAULT);
+    }
+
+    private Bitmap generateQRCode(String text, int size) {
+        try {
+            BitMatrix bitMatrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, size, size);
+            int width = bitMatrix.getWidth();
+            int height = bitMatrix.getHeight();
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    bitmap.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
+                }
+            }
+            return bitmap;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String generateVerificationHash(Labour labour, double totalEarnings, double due) {
+        try {
+            // Include more fields in the hash to detect any edits in the report
+            String attendanceData = tvFullDay.getText().toString() + "|" + tvHalfDay.getText().toString() + "|" + tvAbsent.getText().toString();
+            String data = labour.id + "|" + labour.name + "|" + attendanceData + "|" + 
+                          String.format(Locale.US, "%.2f", totalEarnings) + "|" + 
+                          String.format(Locale.US, "%.2f", due);
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString().substring(0, 16); // Take first 16 chars for brevity
+        } catch (Exception e) {
+            return "HASH_ERROR";
+        }
     }
 }
