@@ -11,26 +11,30 @@
 - **Labour Management**: Easily add, edit, and maintain a directory of your workforce.
 - **Advanced Attendance Tracking**:
   - Mark attendance with a single tap.
-  - Supports multiple shifts and overtime (Full Day, Half Day, 1.5x, 2x, etc.).
-  - Monthly calendar view for quick overview.
+  - Supports multiple shifts (Full Day, Half Day, etc.).
+  - Monthly calendar view for a quick overview.
 - **Automated Wage Calculation**:
   - Automatically calculates monthly earnings based on attendance and daily wage.
   - Handles advances and previous month dues/balances.
 - **Payment History**:
   - Track every payment made to labourers with timestamps.
   - Detailed payment history log.
+- **User Profile Customization**:
+  - Personalize your profile with a custom name and profile photo.
 - **Professional Reports**:
   - Generate clean PDF attendance reports.
-  - **Light Theme Reports**: Ensures reports are always readable and professional, even if the app is in Dark Mode.
+  - **Light Theme Reports**: Ensures reports are always readable and professional.
   - Branding with your Company Name, Address, and Contact details.
   - Support for digital signature/stamp on reports.
 - **Seamless Sharing**:
   - Share PDF reports directly via WhatsApp, Email, or other platforms.
-- **Cloud Synchronization**:
+- **Smart Notifications**:
+  - Daily reminders to mark attendance.
+  - Automatic background checks for application updates via GitHub.
+- **Security & Privacy**:
   - Powered by Firebase for real-time data sync across devices.
   - Secure Google Authentication.
-- **Local Privacy**:
-  - Company branding details and signatures are saved locally on your device.
+  - **Account Isolation**: Local data (Company info, signatures, profile) is isolated per user account for enhanced privacy.
 
 ## 📸 Screenshots
 
@@ -45,9 +49,10 @@
 - **Language**: Java
 - **Database**: Firebase Realtime Database
 - **Authentication**: Firebase Auth (Google Sign-In)
+- **Background Tasks**: WorkManager
 - **Image Loading**: Glide
 - **PDF Generation**: Android PdfDocument API
-- **UI Components**: Material Components for Android (M3)
+- **UI Components**: Material Components for Android (Material 3)
 
 ## 📦 Installation
 
