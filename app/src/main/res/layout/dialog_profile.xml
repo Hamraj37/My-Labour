@@ -44,6 +44,16 @@
             android:textSize="16sp"
             android:textColor="?attr/colorOnSurfaceVariant"/>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_edit_profile"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Edit Profile"
+            android:textAllCaps="false"
+            app:icon="@android:drawable/ic_menu_edit"
+            android:layout_marginTop="4dp"/>
+
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
@@ -146,7 +156,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/about"
                 android:textAllCaps="false"
-                app:icon="@android:drawable/ic_menu_info_details" />
+                app:icon="@drawable/ic_info" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_dialog_privacy"
@@ -155,7 +165,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/privacy_policy"
                 android:textAllCaps="false"
-                app:icon="@android:drawable/ic_lock_lock" />
+                app:icon="@drawable/ic_privacy" />
         </LinearLayout>
 
     </LinearLayout>

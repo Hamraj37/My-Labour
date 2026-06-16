@@ -62,8 +62,11 @@ public class MainActivity extends AppCompatActivity {
     private String nodeKey;
     private ActivityResultLauncher<String> signaturePickerLauncher;
     private String currentSignatureBase64;
+    private String currentProfilePhotoBase64;
     private com.google.android.material.imageview.ShapeableImageView ivDialogSignature;
+    private com.google.android.material.imageview.ShapeableImageView ivEditProfile;
     private View btnRemoveSignature;
+    private ActivityResultLauncher<String> profilePhotoPickerLauncher;
     private static final String UPDATE_CHANNEL_ID = "app_update_channel";
 
     @Override
@@ -86,6 +89,22 @@ public class MainActivity extends AppCompatActivity {
                     }
                     if (btnRemoveSignature != null) {
                         btnRemoveSignature.setVisibility(View.VISIBLE);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        profilePhotoPickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri != null) {
+                try {
+                    InputStream inputStream = getContentResolver().openInputStream(uri);
+                    Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(inputStream);
+                    Bitmap resized = resizeBitmap(bitmap, 500);
+                    currentProfilePhotoBase64 = encodeToBase64(resized);
+                    if (ivEditProfile != null) {
+                        ivEditProfile.setImageBitmap(resized);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -140,11 +159,19 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.iv_profile).setOnClickListener(v -> showProfileDialog(currentUser));
 
-        if (currentUser.getPhotoUrl() != null) {
+        android.content.SharedPreferences userPrefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
+        String customPhotoBase64 = userPrefs.getString("user_photo", null);
+        com.google.android.material.imageview.ShapeableImageView ivProfileToolbar = findViewById(R.id.iv_profile);
+
+        if (customPhotoBase64 != null) {
+            byte[] decodedString = Base64.decode(customPhotoBase64, Base64.DEFAULT);
+            Bitmap decodedByte = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+            ivProfileToolbar.setImageBitmap(decodedByte);
+        } else if (currentUser.getPhotoUrl() != null) {
             Glide.with(this)
                     .load(currentUser.getPhotoUrl())
                     .placeholder(R.drawable.ic_person)
-                    .into((com.google.android.material.imageview.ShapeableImageView) findViewById(R.id.iv_profile));
+                    .into(ivProfileToolbar);
         }
 
         fetchLabours();
@@ -422,14 +449,19 @@ public class MainActivity extends AppCompatActivity {
         TextView tvCompanyAddress = dialogView.findViewById(R.id.tv_company_address);
         TextView tvCompanyPhones = dialogView.findViewById(R.id.tv_company_phones);
         com.google.android.material.button.MaterialButton btnManageCompany = dialogView.findViewById(R.id.btn_manage_company);
+        com.google.android.material.button.MaterialButton btnEditProfile = dialogView.findViewById(R.id.btn_edit_profile);
         com.google.android.material.button.MaterialButton btnAbout = dialogView.findViewById(R.id.btn_dialog_about);
         com.google.android.material.button.MaterialButton btnPrivacy = dialogView.findViewById(R.id.btn_dialog_privacy);
         View btnLogout = dialogView.findViewById(R.id.btn_dialog_logout);
         View tvClose = dialogView.findViewById(R.id.tv_dialog_close);
         TextView tvVersion = dialogView.findViewById(R.id.tv_dialog_version);
 
-        tvName.setText(user.getDisplayName() != null ? user.getDisplayName() : "User");
-        
+        android.content.SharedPreferences userPrefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
+        String customName = userPrefs.getString("user_name", user.getDisplayName());
+        String customPhotoBase64 = userPrefs.getString("user_photo", null);
+
+        tvName.setText(customName != null ? customName : "User");
+
         String email = user.getEmail();
         String phone = user.getPhoneNumber();
         tvEmail.setText(email != null ? email : (phone != null ? phone : "User"));
@@ -441,7 +473,11 @@ public class MainActivity extends AppCompatActivity {
             tvVersion.setVisibility(View.GONE);
         }
 
-        if (user.getPhotoUrl() != null) {
+        if (customPhotoBase64 != null) {
+            byte[] decodedString = Base64.decode(customPhotoBase64, Base64.DEFAULT);
+            Bitmap decodedByte = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+            ivProfile.setImageBitmap(decodedByte);
+        } else if (user.getPhotoUrl() != null) {
             Glide.with(this)
                     .load(user.getPhotoUrl())
                     .placeholder(R.drawable.ic_person)
@@ -492,6 +528,11 @@ public class MainActivity extends AppCompatActivity {
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
+
+        btnEditProfile.setOnClickListener(v -> {
+            dialog.dismiss();
+            showEditProfileDialog(user);
+        });
 
         btnManageCompany.setOnClickListener(v -> {
             dialog.dismiss();
@@ -615,6 +656,68 @@ public class MainActivity extends AppCompatActivity {
         });
 
         btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    private void showEditProfileDialog(FirebaseUser user) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_profile, null);
+        builder.setView(dialogView);
+
+        ivEditProfile = dialogView.findViewById(R.id.iv_edit_profile);
+        com.google.android.material.floatingactionbutton.FloatingActionButton fabPickPhoto = dialogView.findViewById(R.id.fab_pick_photo);
+        EditText etName = dialogView.findViewById(R.id.et_edit_name);
+        View btnSave = dialogView.findViewById(R.id.btn_save_profile);
+        View tvCancel = dialogView.findViewById(R.id.tv_cancel_edit_profile);
+
+        android.content.SharedPreferences userPrefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
+        String currentName = userPrefs.getString("user_name", user.getDisplayName());
+        currentProfilePhotoBase64 = userPrefs.getString("user_photo", null);
+
+        etName.setText(currentName);
+        if (currentProfilePhotoBase64 != null) {
+            byte[] decodedString = Base64.decode(currentProfilePhotoBase64, Base64.DEFAULT);
+            Bitmap decodedByte = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+            ivEditProfile.setImageBitmap(decodedByte);
+        } else if (user.getPhotoUrl() != null) {
+            Glide.with(this)
+                    .load(user.getPhotoUrl())
+                    .placeholder(R.drawable.ic_person)
+                    .into(ivEditProfile);
+        }
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        fabPickPhoto.setOnClickListener(v -> profilePhotoPickerLauncher.launch("image/*"));
+
+        btnSave.setOnClickListener(v -> {
+            String newName = etName.getText().toString().trim();
+            if (newName.isEmpty()) {
+                Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            userPrefs.edit()
+                    .putString("user_name", newName)
+                    .putString("user_photo", currentProfilePhotoBase64)
+                    .apply();
+
+            // Also update the toolbar profile image if it exists in MainActivity
+            if (currentProfilePhotoBase64 != null) {
+                byte[] decodedString = Base64.decode(currentProfilePhotoBase64, Base64.DEFAULT);
+                Bitmap decodedByte = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                ((com.google.android.material.imageview.ShapeableImageView) findViewById(R.id.iv_profile)).setImageBitmap(decodedByte);
+            }
+
+            Toast.makeText(this, "Profile updated", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+        });
+
+        tvCancel.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
     }

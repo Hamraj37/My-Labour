@@ -87,7 +87,7 @@
             android:layout_marginTop="8dp"
             android:text="@string/github_repository"
             android:textAllCaps="false"
-            app:icon="@android:drawable/ic_menu_info_details" />
+            app:icon="@drawable/ic_github" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_about_close"
