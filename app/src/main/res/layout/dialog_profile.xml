@@ -97,6 +97,26 @@
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_dialog_about"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/about"
+            android:textAllCaps="false"
+            app:icon="@android:drawable/ic_menu_info_details" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_dialog_privacy"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="0dp"
+            android:text="@string/privacy_policy"
+            android:textAllCaps="false"
+            app:icon="@android:drawable/ic_lock_lock" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_dialog_logout"
             android:layout_width="match_parent"
             android:layout_height="56dp"
@@ -122,6 +142,15 @@
             android:textColor="?attr/colorPrimary"
             android:textStyle="bold"
             android:textSize="15sp"/>
+
+        <TextView
+            android:id="@+id/tv_dialog_version"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="12sp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:alpha="0.6"/>
 
     </LinearLayout>
 

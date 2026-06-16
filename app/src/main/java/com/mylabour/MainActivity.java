@@ -411,11 +411,21 @@ public class MainActivity extends AppCompatActivity {
         TextView tvCompanyAddress = dialogView.findViewById(R.id.tv_company_address);
         TextView tvCompanyPhones = dialogView.findViewById(R.id.tv_company_phones);
         com.google.android.material.button.MaterialButton btnManageCompany = dialogView.findViewById(R.id.btn_manage_company);
+        com.google.android.material.button.MaterialButton btnAbout = dialogView.findViewById(R.id.btn_dialog_about);
+        com.google.android.material.button.MaterialButton btnPrivacy = dialogView.findViewById(R.id.btn_dialog_privacy);
         View btnLogout = dialogView.findViewById(R.id.btn_dialog_logout);
         View tvClose = dialogView.findViewById(R.id.tv_dialog_close);
+        TextView tvVersion = dialogView.findViewById(R.id.tv_dialog_version);
 
         tvName.setText(user.getDisplayName() != null ? user.getDisplayName() : "User");
         tvEmail.setText(user.getEmail());
+
+        try {
+            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            tvVersion.setText(getString(R.string.version_format, versionName));
+        } catch (Exception e) {
+            tvVersion.setVisibility(View.GONE);
+        }
 
         if (user.getPhotoUrl() != null) {
             Glide.with(this)
@@ -472,6 +482,16 @@ public class MainActivity extends AppCompatActivity {
         btnManageCompany.setOnClickListener(v -> {
             dialog.dismiss();
             showEditCompanyDialog();
+        });
+
+        btnAbout.setOnClickListener(v -> {
+            dialog.dismiss();
+            showAboutDialog();
+        });
+
+        btnPrivacy.setOnClickListener(v -> {
+            dialog.dismiss();
+            showPrivacyDialog();
         });
 
         btnLogout.setOnClickListener(v -> {
@@ -550,6 +570,60 @@ public class MainActivity extends AppCompatActivity {
         });
 
         tvCancel.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    private void showAboutDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_about, null);
+        builder.setView(dialogView);
+
+        TextView tvVersion = dialogView.findViewById(R.id.tv_about_version);
+        View btnGithub = dialogView.findViewById(R.id.btn_github);
+        View btnClose = dialogView.findViewById(R.id.btn_about_close);
+
+        try {
+            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            tvVersion.setText(getString(R.string.version_format, versionName));
+        } catch (Exception e) {
+            tvVersion.setVisibility(View.GONE);
+        }
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnGithub.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Hamraj37/My-Labour"));
+            startActivity(intent);
+        });
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    private void showPrivacyDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_privacy, null);
+        builder.setView(dialogView);
+
+        View btnMore = dialogView.findViewById(R.id.btn_privacy_more);
+        View btnClose = dialogView.findViewById(R.id.btn_privacy_close);
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnMore.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Hamraj37/My-Labour/blob/master/PRIVACY_POLICY.md"));
+            startActivity(intent);
+        });
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
     }
