@@ -29,6 +29,7 @@ public class LoginActivity extends AppCompatActivity {
     private boolean isLoginMode = true;
     private android.widget.TextView tvTitle;
     private com.google.android.material.button.MaterialButton btnMain, btnToggle;
+    private android.view.View progressOverlay;
 
     private final ActivityResultLauncher<Intent> googleSignInLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -38,6 +39,7 @@ public class LoginActivity extends AppCompatActivity {
                         GoogleSignInAccount account = task.getResult(ApiException.class);
                         firebaseAuthWithGoogle(account.getIdToken());
                     } catch (ApiException e) {
+                        hideProgress();
                         Log.w(TAG, "Google sign in failed", e);
                     }
                 }
@@ -74,6 +76,19 @@ public class LoginActivity extends AppCompatActivity {
 
         btnToggle.setOnClickListener(v -> toggleMode());
         findViewById(R.id.google_sign_in_button).setOnClickListener(v -> signIn());
+        progressOverlay = findViewById(R.id.progress_overlay);
+    }
+
+    private void showProgress() {
+        if (progressOverlay != null) {
+            progressOverlay.setVisibility(android.view.View.VISIBLE);
+        }
+    }
+
+    private void hideProgress() {
+        if (progressOverlay != null) {
+            progressOverlay.setVisibility(android.view.View.GONE);
+        }
     }
 
     private void toggleMode() {
@@ -98,8 +113,10 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        showProgress();
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
+                    hideProgress();
                     if (task.isSuccessful()) {
                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                         finish();
@@ -123,8 +140,10 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        showProgress();
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
+                    hideProgress();
                     if (task.isSuccessful()) {
                         Toast.makeText(LoginActivity.this, "Registration Successful!", Toast.LENGTH_SHORT).show();
                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
@@ -136,6 +155,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void signIn() {
+        showProgress();
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         googleSignInLauncher.launch(signInIntent);
     }
@@ -144,6 +164,7 @@ public class LoginActivity extends AppCompatActivity {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, task -> {
+                    hideProgress();
                     if (task.isSuccessful()) {
                         // Sign in success, update UI with the signed-in user's information
                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
