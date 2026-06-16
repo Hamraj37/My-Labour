@@ -92,7 +92,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private DataSnapshot allAttendanceSnapshot;
     private ActivityResultLauncher<String> avatarPickerLauncher;
     private ActivityResultLauncher<Void> cameraLauncher;
-    private View layoutCompanyHeader, dividerCompanyHeader, layoutSignatureExport;
+    private View layoutCompanyHeader, dividerCompanyHeader, layoutSignatureExport, progressLoading;
     private TextView tvHeaderCompanyName, tvHeaderCompanyAddress, tvHeaderCompanyPhones;
     private ImageView ivDetailSignature;
     private com.google.android.material.imageview.ShapeableImageView ivDetailAvatar;
@@ -110,6 +110,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         
         layoutSignatureExport = findViewById(R.id.layout_signature_export);
         ivDetailSignature = findViewById(R.id.iv_detail_signature);
+        progressLoading = findViewById(R.id.progress_loading);
         
         ivDetailAvatar = findViewById(R.id.iv_detail_avatar);
         
@@ -217,14 +218,22 @@ public class LabourDetailActivity extends AppCompatActivity {
             findViewById(R.id.fab_set_paid).setOnClickListener(v -> showSetPaidDialog());
             findViewById(R.id.fab_print).setOnClickListener(v -> {
                 if (currentLabour != null) {
-                    File file = generatePdf(currentLabour);
-                    if (file != null) printPdf(file);
+                    progressLoading.setVisibility(View.VISIBLE);
+                    v.postDelayed(() -> {
+                        File file = generatePdf(currentLabour);
+                        if (file != null) printPdf(file);
+                        progressLoading.setVisibility(View.GONE);
+                    }, 100);
                 }
             });
             findViewById(R.id.fab_share).setOnClickListener(v -> {
                 if (currentLabour != null) {
-                    File file = generatePdf(currentLabour);
-                    if (file != null) shareReportOptions(file, currentLabour);
+                    progressLoading.setVisibility(View.VISIBLE);
+                    v.postDelayed(() -> {
+                        File file = generatePdf(currentLabour);
+                        if (file != null) shareReportOptions(file, currentLabour);
+                        progressLoading.setVisibility(View.GONE);
+                    }, 100);
                 }
             });
         }
