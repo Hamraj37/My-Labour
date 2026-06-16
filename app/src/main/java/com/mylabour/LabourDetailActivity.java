@@ -1426,15 +1426,39 @@ public class LabourDetailActivity extends AppCompatActivity {
             Map<EncodeHintType, Object> hints = new HashMap<>();
             hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
             hints.put(EncodeHintType.MARGIN, 1);
+            hints.put(com.google.zxing.EncodeHintType.ERROR_CORRECTION, com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.H);
+            
             BitMatrix bitMatrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, size, size, hints);
             int width = bitMatrix.getWidth();
             int height = bitMatrix.getHeight();
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+            
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            canvas.drawColor(Color.WHITE);
+
+            // Draw logo as background with low opacity
+            Bitmap logo = BitmapFactory.decodeResource(getResources(), R.drawable.logo);
+            if (logo != null) {
+                int logoSize = (int) (size * 0.85); // Logo covers 85% of QR area
+                Bitmap scaledLogo = Bitmap.createScaledBitmap(logo, logoSize, logoSize, true);
+                int left = (width - logoSize) / 2;
+                int top = (height - logoSize) / 2;
+                
+                Paint logoPaint = new Paint();
+                logoPaint.setAlpha(45); // Set low opacity (approx 18%)
+                canvas.drawBitmap(scaledLogo, left, top, logoPaint);
+            }
+
+            // Draw QR dots on top of the background logo
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < height; y++) {
-                    bitmap.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
+                    if (bitMatrix.get(x, y)) {
+                        bitmap.setPixel(x, y, Color.BLACK);
+                    }
+                    // Else leave it as is (white + faint logo)
                 }
             }
+
             return bitmap;
         } catch (Exception e) {
             return null;
