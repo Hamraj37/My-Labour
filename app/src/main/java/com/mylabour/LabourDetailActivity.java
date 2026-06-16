@@ -417,12 +417,41 @@ public class LabourDetailActivity extends AppCompatActivity {
         }
 
         PdfDocument document = new PdfDocument();
-        int footerHeight = 60;
-        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(width, height + footerHeight, 1).create();
-        PdfDocument.Page page = document.startPage(pageInfo);
+        int pageHeight = (int) (width * 1.414); // A4 aspect ratio
+        int footerHeight = 50;
+        int contentHeightPerPage = pageHeight - footerHeight;
+        
+        int totalPages = (int) Math.ceil((double) height / contentHeightPerPage);
 
-        Canvas canvas = page.getCanvas();
-        view.draw(canvas);
+        Paint paint = new Paint();
+        paint.setColor(Color.GRAY);
+        paint.setTextSize(12);
+        paint.setAntiAlias(true);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setFakeBoldText(true);
+
+        for (int i = 0; i < totalPages; i++) {
+            PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(width, pageHeight, i + 1).create();
+            PdfDocument.Page page = document.startPage(pageInfo);
+            Canvas canvas = page.getCanvas();
+
+            // Draw the view segment
+            canvas.save();
+            canvas.translate(0, -i * contentHeightPerPage);
+            view.draw(canvas);
+            canvas.restore();
+
+            // Add white background for the footer area to avoid content overlap
+            Paint bgPaint = new Paint();
+            bgPaint.setColor(Color.WHITE);
+            canvas.drawRect(0, contentHeightPerPage, width, pageHeight, bgPaint);
+
+            // Add footer text
+            String footerText = "Powered by My Labour - Page " + (i + 1) + " of " + totalPages;
+            canvas.drawText(footerText, width / 2f, pageHeight - (footerHeight / 2f) + 5, paint);
+
+            document.finishPage(page);
+        }
 
         // Restore UI elements
         if (btnChangePhoto != null) btnChangePhoto.setVisibility(View.VISIBLE);
@@ -434,18 +463,6 @@ public class LabourDetailActivity extends AppCompatActivity {
         for (Map.Entry<com.google.android.material.card.MaterialCardView, Integer> entry : todayCards.entrySet()) {
             entry.getKey().setStrokeWidth(entry.getValue());
         }
-
-        // Add footer text
-        Paint paint = new Paint();
-        paint.setColor(Color.GRAY);
-        paint.setTextSize(12);
-        paint.setAntiAlias(true);
-        paint.setTextAlign(Paint.Align.CENTER);
-        paint.setFakeBoldText(true);
-        
-        canvas.drawText("Powered by My Labour", width / 2f, height + (footerHeight / 2f) + 5, paint);
-
-        document.finishPage(page);
 
         File cachePath = new File(getCacheDir(), "reports");
         if (!cachePath.exists() && !cachePath.mkdirs()) {
