@@ -781,7 +781,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_margin="24dp"
+        android:layout_margin="16dp"
+        android:padding="12dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         android:orientation="horizontal"
         android:gravity="center"
         app:layout_behavior="@string/hide_bottom_view_on_scroll_behavior">
@@ -796,6 +799,8 @@
             app:backgroundTint="?attr/colorPrimary"
             app:icon="@android:drawable/ic_menu_add"
             app:iconTint="?attr/colorOnPrimary"
+            app:elevation="6dp"
+            app:pressedTranslationZ="12dp"
             style="@style/Widget.Material3.ExtendedFloatingActionButton.Primary"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -807,7 +812,8 @@
             app:srcCompat="@drawable/ic_print"
             app:backgroundTint="?attr/colorPrimaryContainer"
             app:tint="?attr/colorOnPrimaryContainer"
-            app:elevation="0dp"
+            app:elevation="6dp"
+            app:pressedTranslationZ="12dp"
             style="@style/Widget.Material3.FloatingActionButton.Primary"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -818,7 +824,8 @@
             app:srcCompat="@drawable/ic_share"
             app:backgroundTint="?attr/colorPrimaryContainer"
             app:tint="?attr/colorOnPrimaryContainer"
-            app:elevation="0dp"
+            app:elevation="6dp"
+            app:pressedTranslationZ="12dp"
             style="@style/Widget.Material3.FloatingActionButton.Primary"/>
 
     </LinearLayout>

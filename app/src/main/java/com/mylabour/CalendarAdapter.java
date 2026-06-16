@@ -8,14 +8,14 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 import com.google.android.material.card.MaterialCardView;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Objects;
 
 public class CalendarAdapter extends BaseAdapter {
-    private Context context;
-    private List<CalendarDay> days;
-    private LayoutInflater inflater;
+    private final Context context;
+    private final List<CalendarDay> days;
+    private final LayoutInflater inflater;
 
     public CalendarAdapter(Context context, List<CalendarDay> days) {
         this.context = context;
@@ -67,20 +67,20 @@ public class CalendarAdapter extends BaseAdapter {
             
             // Set colors based on status
             String status = day.status;
-            if (status.equals("Double Full Day") || status.equals("2x") || (status.endsWith("x") && !status.contains(".5"))) {
+            if (Objects.equals(status, "Double Full Day") || Objects.equals(status, "2x") || (status != null && status.endsWith("x") && !status.contains(".5"))) {
                 card.setCardBackgroundColor(Color.parseColor("#A5D6A7")); // Stronger Green
                 tvDay.setTextColor(Color.parseColor("#1B5E20"));
-            } else if (status.equals("Full Day + Half") || (status.endsWith("x") && status.contains(".5"))) {
+            } else if (Objects.equals(status, "Full Day + Half") || (status != null && status.endsWith("x") && status.contains(".5"))) {
                 card.setCardBackgroundColor(Color.parseColor("#E8F5E9")); // Green
                 tvDay.setTextColor(Color.parseColor("#2E7D32"));
                 dot.setVisibility(View.VISIBLE); // Dot to indicate partial/overtime
-            } else if (status.equals("Full Day")) {
+            } else if (Objects.equals(status, "Full Day")) {
                 card.setCardBackgroundColor(Color.parseColor("#E8F5E9")); // Light Green
                 tvDay.setTextColor(Color.parseColor("#2E7D32"));
-            } else if (status.equals("Half Day")) {
+            } else if (Objects.equals(status, "Half Day")) {
                 card.setCardBackgroundColor(Color.parseColor("#FFF3E0")); // Light Orange
                 tvDay.setTextColor(Color.parseColor("#EF6C00"));
-            } else if (status.equals("Absent")) {
+            } else if (Objects.equals(status, "Absent")) {
                 card.setCardBackgroundColor(Color.parseColor("#FFEBEE")); // Light Red
                 tvDay.setTextColor(Color.parseColor("#C62828"));
             } else {

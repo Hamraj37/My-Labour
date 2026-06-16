@@ -94,22 +94,23 @@ public class LoginActivity extends AppCompatActivity {
     private void toggleMode() {
         isLoginMode = !isLoginMode;
         if (isLoginMode) {
-            tvTitle.setText("Login");
-            btnMain.setText("Login");
-            btnToggle.setText("Don't have an account? Register");
+            tvTitle.setText(R.string.login);
+            btnMain.setText(R.string.login);
+            btnToggle.setText(R.string.register_prompt);
         } else {
-            tvTitle.setText("Sign Up");
-            btnMain.setText("Sign Up");
-            btnToggle.setText("Already have an account? Login");
+            tvTitle.setText(R.string.sign_up);
+            btnMain.setText(R.string.sign_up);
+            btnToggle.setText(R.string.login_prompt);
         }
     }
 
     private void loginWithEmail() {
+        if (etEmail.getText() == null || etPassword.getText() == null) return;
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
         if (email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.enter_email_password, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -121,22 +122,24 @@ public class LoginActivity extends AppCompatActivity {
                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                         finish();
                     } else {
-                        Toast.makeText(LoginActivity.this, "Login Failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        String error = task.getException() != null ? task.getException().getMessage() : "Unknown Error";
+                        Toast.makeText(LoginActivity.this, getString(R.string.login_failed_format, error), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
     private void registerWithEmail() {
+        if (etEmail.getText() == null || etPassword.getText() == null) return;
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
         if (email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Please enter email and password to register", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.enter_email_password_register, Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (password.length() < 6) {
-            Toast.makeText(this, "Password should be at least 6 characters", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.password_length_error, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -145,11 +148,12 @@ public class LoginActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, task -> {
                     hideProgress();
                     if (task.isSuccessful()) {
-                        Toast.makeText(LoginActivity.this, "Registration Successful!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, R.string.registration_success, Toast.LENGTH_SHORT).show();
                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                         finish();
                     } else {
-                        Toast.makeText(LoginActivity.this, "Registration Failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        String error = task.getException() != null ? task.getException().getMessage() : "Unknown Error";
+                        Toast.makeText(LoginActivity.this, getString(R.string.registration_failed_format, error), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -171,7 +175,7 @@ public class LoginActivity extends AppCompatActivity {
                         finish();
                     } else {
                         // If sign in fails, display a message to the user.
-                        Toast.makeText(LoginActivity.this, "Authentication Failed.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, R.string.auth_failed, Toast.LENGTH_SHORT).show();
                     }
                 });
     }

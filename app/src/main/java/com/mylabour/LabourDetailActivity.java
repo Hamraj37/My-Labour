@@ -3,7 +3,6 @@ package com.mylabour;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -73,7 +72,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private View tvPaymentHistoryLabel, cardPaymentHistory;
     private DatabaseReference mAttendanceRef, mLabourRef, mBaseAttendanceRef, mPaymentsRef;
     private ValueEventListener attendanceListener;
-    private List<Payment> paymentList = new ArrayList<>();
+    private final List<Payment> paymentList = new ArrayList<>();
     private String labourId;
     private double dailyWage;
     private Calendar currentCalendar;
@@ -128,7 +127,7 @@ public class LabourDetailActivity extends AppCompatActivity {
                     ivDetailAvatar.setPadding(0, 0, 0, 0);
                     ivDetailAvatar.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    android.util.Log.e("LabourDetail", "Failed to load image", e);
                     Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -191,7 +190,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             tvNumber.setText(finalNumber);
             tvEmail.setText(labour.email != null && !labour.email.isEmpty() ? labour.email : "N/A");
             tvAddress.setText(labour.address != null && !labour.address.isEmpty() ? labour.address : "N/A");
-            tvWage.setText("₹" + formatAmount(dailyWage));
+            tvWage.setText(getString(R.string.wage_format, formatAmount(dailyWage)));
 
             currentCalendar = Calendar.getInstance();
             setupFirebase();
@@ -286,12 +285,11 @@ public class LabourDetailActivity extends AppCompatActivity {
         android.widget.EditText etEmail = dialogView.findViewById(R.id.et_email);
         android.widget.EditText etNumber = dialogView.findViewById(R.id.et_number);
         android.widget.EditText etAddress = dialogView.findViewById(R.id.et_address);
-        android.widget.EditText etInitialAdvance = dialogView.findViewById(R.id.et_initial_advance);
         View layoutInitialAdvance = dialogView.findViewById(R.id.layout_initial_advance);
         View btnSave = dialogView.findViewById(R.id.btn_save_labour);
         View tvCancel = dialogView.findViewById(R.id.tv_cancel_labour);
 
-        tvTitle.setText("Edit Labour Details");
+        tvTitle.setText(R.string.edit_labour_details);
         etName.setText(currentLabour.name);
         etEmail.setText(currentLabour.email);
         etNumber.setText(currentLabour.number);
@@ -316,7 +314,7 @@ public class LabourDetailActivity extends AppCompatActivity {
                 updateLabourDetails(name, email, number, address, currentLabour.initialAdvance);
                 dialog.dismiss();
             } else {
-                Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.name_empty_error, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -334,18 +332,18 @@ public class LabourDetailActivity extends AppCompatActivity {
             updates.put("address", address);
             updates.put("initialAdvance", initialAdvance);
 
-            mLabourRef.updateChildren(updates).addOnSuccessListener(aVoid -> {
-                Toast.makeText(this, "Details updated successfully", Toast.LENGTH_SHORT).show();
-            });
+            mLabourRef.updateChildren(updates).addOnSuccessListener(aVoid -> 
+                Toast.makeText(this, R.string.details_updated, Toast.LENGTH_SHORT).show()
+            );
         }
     }
 
     private void showDeleteConfirmation() {
         new AlertDialog.Builder(this)
-                .setTitle("Delete Labour")
-                .setMessage("Are you sure you want to delete this labour and all attendance data? This cannot be undone.")
-                .setPositiveButton("Delete", (dialog, which) -> deleteLabour())
-                .setNegativeButton("Cancel", null)
+                .setTitle(R.string.delete_labour_title)
+                .setMessage(R.string.delete_labour_msg)
+                .setPositiveButton(R.string.delete, (dialog, which) -> deleteLabour())
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
@@ -450,7 +448,9 @@ public class LabourDetailActivity extends AppCompatActivity {
         document.finishPage(page);
 
         File cachePath = new File(getCacheDir(), "reports");
-        if (!cachePath.exists()) cachePath.mkdirs();
+        if (!cachePath.exists() && !cachePath.mkdirs()) {
+            android.util.Log.e("LabourDetail", "Failed to create cache directory");
+        }
         File file = new File(cachePath, "Labour_Report_" + labour.name.replace(" ", "_") + ".pdf");
         
         try {
@@ -458,7 +458,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             document.close();
             return file;
         } catch (IOException e) {
-            e.printStackTrace();
+            android.util.Log.e("LabourDetail", "Failed to generate PDF", e);
             Toast.makeText(this, "Failed to generate PDF", Toast.LENGTH_SHORT).show();
             return null;
         }
@@ -719,28 +719,36 @@ public class LabourDetailActivity extends AppCompatActivity {
                     String key = postSnapshot.getKey();
                     if (key == null) continue;
                     
-                    if (key.equals("monthlyWage")) {
-                        Object value = postSnapshot.getValue();
-                        if (value instanceof Number) {
-                            wageForMonth = ((Number) value).doubleValue();
-                        }
-                    } else if (key.equals("paidAmount")) {
-                        Object value = postSnapshot.getValue();
-                        if (value instanceof Number) {
-                            legacyPaidAmount = ((Number) value).doubleValue();
-                        }
-                    } else if (key.equals("payments")) {
-                        for (DataSnapshot paymentSnapshot : postSnapshot.getChildren()) {
-                            Payment p = paymentSnapshot.getValue(Payment.class);
-                            if (p != null) {
-                                p.id = paymentSnapshot.getKey();
-                                paymentList.add(p);
+                    switch (key) {
+                        case "monthlyWage": {
+                            Object value = postSnapshot.getValue();
+                            if (value instanceof Number) {
+                                wageForMonth = ((Number) value).doubleValue();
                             }
+                            break;
                         }
-                    } else {
-                        Object value = postSnapshot.getValue();
-                        if (value instanceof String) {
-                            attendanceMap.put(key, (String) value);
+                        case "paidAmount": {
+                            Object value = postSnapshot.getValue();
+                            if (value instanceof Number) {
+                                legacyPaidAmount = ((Number) value).doubleValue();
+                            }
+                            break;
+                        }
+                        case "payments":
+                            for (DataSnapshot paymentSnapshot : postSnapshot.getChildren()) {
+                                Payment p = paymentSnapshot.getValue(Payment.class);
+                                if (p != null) {
+                                    p.id = paymentSnapshot.getKey();
+                                    paymentList.add(p);
+                                }
+                            }
+                            break;
+                        default: {
+                            Object value = postSnapshot.getValue();
+                            if (value instanceof String) {
+                                attendanceMap.put(key, (String) value);
+                            }
+                            break;
                         }
                     }
                 }
@@ -806,7 +814,7 @@ public class LabourDetailActivity extends AppCompatActivity {
 
             tvDate.setText(dateFormat.format(payment.timestamp));
             tvTime.setText(timeFormat.format(payment.timestamp));
-            tvAmount.setText("₹" + formatAmount(payment.amount));
+            tvAmount.setText(getString(R.string.wage_format, formatAmount(payment.amount)));
 
             btnDelete.setOnClickListener(v -> deletePayment(payment));
 
@@ -847,7 +855,7 @@ public class LabourDetailActivity extends AppCompatActivity {
 
                     if (lastWage > 0) {
                         dailyWage = lastWage;
-                        tvWage.setText("₹" + formatAmount(dailyWage));
+                        tvWage.setText(getString(R.string.wage_format, formatAmount(dailyWage)));
                         // Set it as base wage for the labour
                         mLabourRef.child("baseWage").setValue(lastWage);
                         updateSummary();
@@ -855,14 +863,14 @@ public class LabourDetailActivity extends AppCompatActivity {
                     }
                 }
                 dailyWage = 0;
-                tvWage.setText("₹" + formatAmount(dailyWage));
+                tvWage.setText(getString(R.string.wage_format, formatAmount(dailyWage)));
                 updateSummary();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 dailyWage = 0;
-                tvWage.setText("₹" + formatAmount(dailyWage));
+                tvWage.setText(getString(R.string.wage_format, formatAmount(dailyWage)));
                 updateSummary();
             }
         });
@@ -911,12 +919,12 @@ public class LabourDetailActivity extends AppCompatActivity {
         calendarGrid.setOnItemClickListener((parent, view, position, id) -> {
             CalendarAdapter.CalendarDay day = days.get(position);
             if (day.dayNumber != 0) {
-                showStatusDialog(day, position);
+                showStatusDialog(day);
             }
         });
     }
 
-    private void showStatusDialog(CalendarAdapter.CalendarDay day, int position) {
+    private void showStatusDialog(CalendarAdapter.CalendarDay day) {
         String[] options = {"5x", "4.5x", "4x", "3.5x", "3x", "2.5x", "2x", "1.5x", "Full Day", "Half Day", "Absent", "Reset"};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Mark Attendance - Day " + day.dayNumber);
@@ -982,19 +990,19 @@ public class LabourDetailActivity extends AppCompatActivity {
         double grossTotal = totalEarnings + previousMonthDue;
         double balance = grossTotal - paidAmountForMonth;
 
-        tvTotalAmount.setText("₹" + formatAmount(grossTotal));
-        tvPaidAmount.setText("₹" + formatAmount(paidAmountForMonth));
+        tvTotalAmount.setText(getString(R.string.wage_format, formatAmount(grossTotal)));
+        tvPaidAmount.setText(getString(R.string.wage_format, formatAmount(paidAmountForMonth)));
 
         if (balance > 0) {
-            tvDueAmount.setText("₹" + formatAmount(balance));
+            tvDueAmount.setText(getString(R.string.wage_format, formatAmount(balance)));
             layoutDueAmount.setVisibility(View.VISIBLE);
             layoutAdvanceAmount.setVisibility(View.GONE);
         } else if (balance < 0) {
-            tvAdvanceAmount.setText("₹" + formatAmount(Math.abs(balance)));
+            tvAdvanceAmount.setText(getString(R.string.wage_format, formatAmount(Math.abs(balance))));
             layoutDueAmount.setVisibility(View.GONE);
             layoutAdvanceAmount.setVisibility(View.VISIBLE);
         } else {
-            tvDueAmount.setText("₹0");
+            tvDueAmount.setText(getString(R.string.wage_format, "0"));
             layoutDueAmount.setVisibility(View.VISIBLE);
             layoutAdvanceAmount.setVisibility(View.GONE);
         }
@@ -1045,11 +1053,11 @@ public class LabourDetailActivity extends AppCompatActivity {
     private void savePaidAmountToFirebase(double amount) {
         if (mPaymentsRef != null) {
             String id = mPaymentsRef.push().getKey();
-            Payment payment = new Payment(id, amount, System.currentTimeMillis());
-            mPaymentsRef.child(id).setValue(payment)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(this, "Payment added successfully", Toast.LENGTH_SHORT).show();
-                    });
+            if (id != null) {
+                Payment payment = new Payment(id, amount, System.currentTimeMillis());
+                mPaymentsRef.child(id).setValue(payment)
+                        .addOnSuccessListener(aVoid -> Toast.makeText(this, "Payment added successfully", Toast.LENGTH_SHORT).show());
+            }
         }
     }
 
@@ -1147,13 +1155,13 @@ public class LabourDetailActivity extends AppCompatActivity {
         previousMonthDue = cumulativeBalance;
 
         if (previousMonthDue > 0) {
-            tvPreviousDue.setText("₹" + formatAmount(previousMonthDue));
+            tvPreviousDue.setText(getString(R.string.wage_format, formatAmount(previousMonthDue)));
             tvPreviousDue.setTextColor(Color.parseColor("#C62828")); // Red for due
             tvPrevDueLabel.setText("Prev. Due");
             layoutPreviousDue.setVisibility(View.VISIBLE);
             dividerPrevDue.setVisibility(View.VISIBLE);
         } else if (previousMonthDue < 0) {
-            tvPreviousDue.setText("₹" + formatAmount(Math.abs(previousMonthDue)));
+            tvPreviousDue.setText(getString(R.string.wage_format, formatAmount(Math.abs(previousMonthDue))));
             tvPreviousDue.setTextColor(Color.parseColor("#2E7D32")); // Green for advance
             tvPrevDueLabel.setText("Prev. Advance");
             layoutPreviousDue.setVisibility(View.VISIBLE);
@@ -1195,9 +1203,9 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private String formatAmount(double amount) {
         if (amount == (long) amount) {
-            return String.format("%d", (long) amount);
+            return String.format(Locale.getDefault(), "%d", (long) amount);
         } else {
-            return String.format("%s", amount);
+            return String.valueOf(amount);
         }
     }
 

@@ -17,8 +17,8 @@ public class LabourAdapter extends RecyclerView.Adapter<LabourAdapter.LabourView
 
     private List<Labour> labourList;
     private List<Labour> labourListFull;
-    private OnLabourClickListener listener;
-    private String nodeKey;
+    private final OnLabourClickListener listener;
+    private final String nodeKey;
 
     public interface OnLabourClickListener {
         void onLabourClick(Labour labour);
@@ -97,9 +97,7 @@ public class LabourAdapter extends RecyclerView.Adapter<LabourAdapter.LabourView
                     ivAvatar.setImageBitmap(decodedByte);
                     ivAvatar.setPadding(0, 0, 0, 0);
                     ivAvatar.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                        ivAvatar.setImageTintList(null);
-                    }
+                    ivAvatar.setImageTintList(null);
                 } catch (Exception e) {
                     setDefaultAvatar();
                 }
@@ -124,9 +122,7 @@ public class LabourAdapter extends RecyclerView.Adapter<LabourAdapter.LabourView
             Context context = itemView.getContext();
             android.util.TypedValue typedValue = new android.util.TypedValue();
             context.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnPrimaryContainer, typedValue, true);
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                ivAvatar.setImageTintList(android.content.res.ColorStateList.valueOf(typedValue.data));
-            }
+            ivAvatar.setImageTintList(android.content.res.ColorStateList.valueOf(typedValue.data));
         }
     }
 }

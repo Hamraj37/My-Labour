@@ -30,6 +30,14 @@
     <string name="remove_signature">Remove Signature</string>
     <string name="options">Options</string>
     <string name="edit_labour">Edit Labour</string>
+    <string name="edit_labour_details">Edit Labour Details</string>
+    <string name="wage_format">₹%1$s</string>
+    <string name="delete_labour_title">Delete Labour</string>
+    <string name="delete_labour_msg">Are you sure you want to delete this labour and all attendance data? This cannot be undone.</string>
+    <string name="details_updated">Details updated successfully</string>
+    <string name="name_empty_error">Name cannot be empty</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
     <string name="show_company_info">Show Company Info</string>
     <string name="show_signature_stamp">Show Signature/Stamp</string>
     <string name="delete_labour">Delete Labour</string>
@@ -48,4 +56,22 @@
     <string name="privacy_policy">Privacy Policy</string>
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="privacy_policy_description">Your privacy is important to us. My Labour operates on a local-first principle for sensitive data like company details and signatures, while labour data is securely synced with Firebase for your convenience.\n\nWe do not share your data with third parties. For more details, please visit our online privacy page.</string>
+    <string name="default_user_name">User</string>
+    <string name="failed_load_data">Failed to load data.</string>
+    <string name="please_enter_name">Please enter a name</string>
+    <string name="labour_added_success">Labour added successfully</string>
+    <string name="labour_added_failure">Failed to add labour</string>
+    <string name="profile_updated">Profile updated</string>
+    <string name="name_cannot_empty">Name cannot be empty</string>
+    <string name="login">Login</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="register_prompt">Don\'t have an account? Register</string>
+    <string name="login_prompt">Already have an account? Login</string>
+    <string name="enter_email_password">Please enter email and password</string>
+    <string name="enter_email_password_register">Please enter email and password to register</string>
+    <string name="password_length_error">Password should be at least 6 characters</string>
+    <string name="registration_success">Registration Successful!</string>
+    <string name="auth_failed">Authentication Failed.</string>
+    <string name="login_failed_format">Login Failed: %1$s</string>
+    <string name="registration_failed_format">Registration Failed: %1$s</string>
 </resources>

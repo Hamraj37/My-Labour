@@ -10,7 +10,6 @@ import android.os.Build;
 import android.os.Bundle;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -91,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
                         btnRemoveSignature.setVisibility(View.VISIBLE);
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    android.util.Log.e("MainActivity", "Error picking signature", e);
                 }
             }
         });
@@ -107,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                         ivEditProfile.setImageBitmap(resized);
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    android.util.Log.e("MainActivity", "Error picking profile photo", e);
                 }
             }
         });
@@ -254,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
                         if (!latestClean.equals(currentClean)) {
                             runOnUiThread(() -> {
                                 showUpdateDialog(latestVersion, finalDownloadUrl, formattedNotes);
-                                showUpdateNotification(latestVersion, finalDownloadUrl);
+                                showUpdateNotification(latestVersion);
                             });
                         }
                     }
@@ -359,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError error) {
                 progressBar.setVisibility(View.GONE);
                 swipeRefreshLayout.setRefreshing(false);
-                Toast.makeText(MainActivity.this, "Failed to load data.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, R.string.failed_load_data, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -394,7 +393,7 @@ public class MainActivity extends AppCompatActivity {
                 addLabourToFirebase(name, email, number, address, initialAdvance);
                 dialog.dismiss();
             } else {
-                Toast.makeText(MainActivity.this, "Please enter a name", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, R.string.please_enter_name, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -410,8 +409,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (id != null) {
             mDatabase.child(id).setValue(labour)
-                    .addOnSuccessListener(aVoid -> Toast.makeText(MainActivity.this, "Labour added successfully", Toast.LENGTH_SHORT).show())
-                    .addOnFailureListener(e -> Toast.makeText(MainActivity.this, "Failed to add labour", Toast.LENGTH_SHORT).show());
+                    .addOnSuccessListener(aVoid -> Toast.makeText(MainActivity.this, R.string.labour_added_success, Toast.LENGTH_SHORT).show())
+                    .addOnFailureListener(e -> Toast.makeText(MainActivity.this, R.string.labour_added_failure, Toast.LENGTH_SHORT).show());
         }
     }
 
@@ -460,11 +459,11 @@ public class MainActivity extends AppCompatActivity {
         String customName = userPrefs.getString("user_name", user.getDisplayName());
         String customPhotoBase64 = userPrefs.getString("user_photo", null);
 
-        tvName.setText(customName != null ? customName : "User");
+        tvName.setText(java.util.Objects.requireNonNullElse(customName, getString(R.string.default_user_name)));
 
         String email = user.getEmail();
         String phone = user.getPhoneNumber();
-        tvEmail.setText(email != null ? email : (phone != null ? phone : "User"));
+        tvEmail.setText(java.util.Objects.requireNonNullElseGet(email, () -> java.util.Objects.requireNonNullElse(phone, getString(R.string.default_user_name))));
 
         try {
             String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
@@ -516,12 +515,12 @@ public class MainActivity extends AppCompatActivity {
                 tvCompanyPhones.setVisibility(View.GONE);
             }
 
-            btnManageCompany.setText("Edit Company Details");
+            btnManageCompany.setText(R.string.edit_company_details);
         } else {
             tvCompanyName.setVisibility(View.GONE);
             tvCompanyAddress.setVisibility(View.GONE);
             tvCompanyPhones.setVisibility(View.GONE);
-            btnManageCompany.setText("Add Company Details");
+            btnManageCompany.setText(R.string.add_company_details);
         }
 
         AlertDialog dialog = builder.create();
@@ -697,7 +696,7 @@ public class MainActivity extends AppCompatActivity {
         btnSave.setOnClickListener(v -> {
             String newName = etName.getText().toString().trim();
             if (newName.isEmpty()) {
-                Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.name_cannot_empty, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -713,7 +712,7 @@ public class MainActivity extends AppCompatActivity {
                 ((com.google.android.material.imageview.ShapeableImageView) findViewById(R.id.iv_profile)).setImageBitmap(decodedByte);
             }
 
-            Toast.makeText(this, "Profile updated", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.profile_updated, Toast.LENGTH_SHORT).show();
             dialog.dismiss();
         });
 
@@ -760,7 +759,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void showUpdateNotification(String version, String downloadUrl) {
+    private void showUpdateNotification(String version) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             return;
