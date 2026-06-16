@@ -64,6 +64,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.nio.charset.StandardCharsets;
 import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.common.BitMatrix;
 import java.security.MessageDigest;
@@ -773,7 +774,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             mAttendanceRef.child("monthlyWage").setValue(newWage)
                     .addOnSuccessListener(aVoid -> {
                         dailyWage = newWage;
-                        tvWage.setText("₹" + formatAmount(dailyWage));
+                        tvWage.setText(getString(R.string.wage_format, formatAmount(dailyWage)));
                         // Also update base wage for the labour
                         mLabourRef.child("baseWage").setValue(newWage);
                         updateSummary();
@@ -840,7 +841,7 @@ public class LabourDetailActivity extends AppCompatActivity {
                     fetchAndSetBaseWageFromLastMonth();
                     return;
                 }
-                tvWage.setText("₹" + formatAmount(dailyWage));
+                tvWage.setText(getString(R.string.wage_format, formatAmount(dailyWage)));
 
                 double totalPaidFromList = 0;
                 for (Payment p : paymentList) totalPaidFromList += p.amount;
@@ -1363,7 +1364,10 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private Bitmap generateQRCode(String text, int size) {
         try {
-            BitMatrix bitMatrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, size, size);
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+            hints.put(EncodeHintType.MARGIN, 1);
+            BitMatrix bitMatrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, size, size, hints);
             int width = bitMatrix.getWidth();
             int height = bitMatrix.getHeight();
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
