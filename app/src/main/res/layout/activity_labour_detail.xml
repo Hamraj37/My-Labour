@@ -665,24 +665,25 @@
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
                             android:layout_marginBottom="8dp">
-                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="S" android:textAlignment="center" android:textSize="12sp" android:textColor="?attr/colorOutline"/>
-                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="M" android:textAlignment="center" android:textSize="12sp" android:textColor="?attr/colorOutline"/>
-                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T" android:textAlignment="center" android:textSize="12sp" android:textColor="?attr/colorOutline"/>
-                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="W" android:textAlignment="center" android:textSize="12sp" android:textColor="?attr/colorOutline"/>
-                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T" android:textAlignment="center" android:textSize="12sp" android:textColor="?attr/colorOutline"/>
-                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="F" android:textAlignment="center" android:textSize="12sp" android:textColor="?attr/colorOutline"/>
-                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="S" android:textAlignment="center" android:textSize="12sp" android:textColor="?attr/colorOutline"/>
+                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="S" android:textAlignment="center" android:textSize="12sp" android:textStyle="bold" android:textColor="?attr/colorOutline"/>
+                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="M" android:textAlignment="center" android:textSize="12sp" android:textStyle="bold" android:textColor="?attr/colorOutline"/>
+                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T" android:textAlignment="center" android:textSize="12sp" android:textStyle="bold" android:textColor="?attr/colorOutline"/>
+                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="W" android:textAlignment="center" android:textSize="12sp" android:textStyle="bold" android:textColor="?attr/colorOutline"/>
+                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T" android:textAlignment="center" android:textSize="12sp" android:textStyle="bold" android:textColor="?attr/colorOutline"/>
+                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="F" android:textAlignment="center" android:textSize="12sp" android:textStyle="bold" android:textColor="?attr/colorOutline"/>
+                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="S" android:textAlignment="center" android:textSize="12sp" android:textStyle="bold" android:textColor="?attr/colorOutline"/>
                         </LinearLayout>
 
                         <GridView
                             android:id="@+id/calendar_grid"
                             android:layout_width="match_parent"
-                            android:layout_height="280dp"
+                            android:layout_height="300dp"
                             android:numColumns="7"
-                            android:verticalSpacing="4dp"
-                            android:horizontalSpacing="4dp"
+                            android:verticalSpacing="0dp"
+                            android:horizontalSpacing="0dp"
                             android:stretchMode="columnWidth"
-                            android:scrollbars="none"/>
+                            android:scrollbars="none"
+                            android:listSelector="@android:color/transparent"/>
                     </LinearLayout>
 
                 </com.google.android.material.card.MaterialCardView>
