@@ -18,14 +18,16 @@ public class LabourAdapter extends RecyclerView.Adapter<LabourAdapter.LabourView
     private List<Labour> labourList;
     private List<Labour> labourListFull;
     private OnLabourClickListener listener;
+    private String nodeKey;
 
     public interface OnLabourClickListener {
         void onLabourClick(Labour labour);
     }
 
-    public LabourAdapter(List<Labour> labourList, OnLabourClickListener listener) {
+    public LabourAdapter(List<Labour> labourList, String nodeKey, OnLabourClickListener listener) {
         this.labourList = labourList;
         this.labourListFull = new ArrayList<>(labourList);
+        this.nodeKey = nodeKey;
         this.listener = listener;
     }
 
@@ -59,7 +61,7 @@ public class LabourAdapter extends RecyclerView.Adapter<LabourAdapter.LabourView
     @Override
     public void onBindViewHolder(@NonNull LabourViewHolder holder, int position) {
         Labour labour = labourList.get(position);
-        holder.bind(labour);
+        holder.bind(labour, nodeKey);
     }
 
     @Override
@@ -80,12 +82,12 @@ public class LabourAdapter extends RecyclerView.Adapter<LabourAdapter.LabourView
             ivAvatar = itemView.findViewById(R.id.iv_avatar);
         }
 
-        public void bind(Labour labour) {
+        public void bind(Labour labour, String nodeKey) {
             tvName.setText(labour.name);
             tvNumber.setText(labour.number);
             
             String photoBase64 = itemView.getContext()
-                    .getSharedPreferences("LabourPhotos", Context.MODE_PRIVATE)
+                    .getSharedPreferences("LabourPhotos_" + nodeKey, Context.MODE_PRIVATE)
                     .getString("photo_" + labour.id, null);
 
             if (photoBase64 != null && !photoBase64.isEmpty()) {

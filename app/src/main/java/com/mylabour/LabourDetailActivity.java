@@ -105,8 +105,16 @@ public class LabourDetailActivity extends AppCompatActivity {
         ivDetailSignature = findViewById(R.id.iv_detail_signature);
         
         ivDetailAvatar = findViewById(R.id.iv_detail_avatar);
+        
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            String email = user.getEmail();
+            nodeKey = (email != null) ? email.replace(".", ",") : user.getUid();
+        }
+        
         loadCompanyHeader();
         loadSignature();
+        loadAvatarLocally();
 
         avatarPickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) {
@@ -225,7 +233,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         View menuDelete = dialogView.findViewById(R.id.menu_delete);
         View menuClose = dialogView.findViewById(R.id.menu_close);
 
-        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
+        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs_" + nodeKey, MODE_PRIVATE);
         boolean showCompany = prefs.getBoolean("show_company_header", true);
         switchCompany.setChecked(showCompany);
         
@@ -569,11 +577,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void setupFirebase() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            String userEmail = currentUser.getEmail();
-            nodeKey = (userEmail != null) ? userEmail.replace(".", ",") : currentUser.getUid();
-            
+        if (nodeKey != null) {
             mLabourRef = FirebaseDatabase.getInstance().getReference("labours")
                     .child(nodeKey)
                     .child(labourId);
@@ -616,14 +620,14 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void saveAvatarLocally(String base64) {
-        getSharedPreferences("LabourPhotos", MODE_PRIVATE).edit()
+        getSharedPreferences("LabourPhotos_" + nodeKey, MODE_PRIVATE).edit()
                 .putString("photo_" + labourId, base64)
                 .apply();
         Toast.makeText(this, "Photo saved locally", Toast.LENGTH_SHORT).show();
     }
 
     private void loadAvatarLocally() {
-        String base64 = getSharedPreferences("LabourPhotos", MODE_PRIVATE)
+        String base64 = getSharedPreferences("LabourPhotos_" + nodeKey, MODE_PRIVATE)
                 .getString("photo_" + labourId, null);
         if (base64 != null && !base64.isEmpty()) {
             try {
@@ -1198,7 +1202,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void loadCompanyHeader() {
-        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
+        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs_" + nodeKey, MODE_PRIVATE);
         boolean showCompany = prefs.getBoolean("show_company_header", true);
         
         String name = prefs.getString("company_name", "");
@@ -1230,7 +1234,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void loadSignature() {
-        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
+        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs_" + nodeKey, MODE_PRIVATE);
         String signatureBase64 = prefs.getString("company_signature", null);
         boolean showSignature = prefs.getBoolean("show_signature", true);
         

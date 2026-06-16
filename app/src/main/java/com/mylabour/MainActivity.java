@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         labourList = new ArrayList<>();
-        adapter = new LabourAdapter(labourList, labour -> {
+        adapter = new LabourAdapter(labourList, nodeKey, labour -> {
             Intent intent = new Intent(MainActivity.this, LabourDetailActivity.class);
             intent.putExtra("labour", labour);
             startActivity(intent);
@@ -159,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.iv_profile).setOnClickListener(v -> showProfileDialog(currentUser));
 
-        android.content.SharedPreferences userPrefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
+        android.content.SharedPreferences userPrefs = getSharedPreferences("UserProfile_" + nodeKey, MODE_PRIVATE);
         String customPhotoBase64 = userPrefs.getString("user_photo", null);
         com.google.android.material.imageview.ShapeableImageView ivProfileToolbar = findViewById(R.id.iv_profile);
 
@@ -456,7 +456,7 @@ public class MainActivity extends AppCompatActivity {
         View tvClose = dialogView.findViewById(R.id.tv_dialog_close);
         TextView tvVersion = dialogView.findViewById(R.id.tv_dialog_version);
 
-        android.content.SharedPreferences userPrefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
+        android.content.SharedPreferences userPrefs = getSharedPreferences("UserProfile_" + nodeKey, MODE_PRIVATE);
         String customName = userPrefs.getString("user_name", user.getDisplayName());
         String customPhotoBase64 = userPrefs.getString("user_photo", null);
 
@@ -485,7 +485,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Load Company Details from SharedPreferences
-        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
+        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs_" + nodeKey, MODE_PRIVATE);
         String companyName = prefs.getString("company_name", "");
         String companyAddress = prefs.getString("company_address", "");
         String companyPhone = prefs.getString("company_phone", "");
@@ -578,7 +578,7 @@ public class MainActivity extends AppCompatActivity {
         View btnSave = dialogView.findViewById(R.id.btn_save_company);
         View tvCancel = dialogView.findViewById(R.id.tv_cancel_company);
         
-        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs", MODE_PRIVATE);
+        android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs_" + nodeKey, MODE_PRIVATE);
         etCompanyName.setText(prefs.getString("company_name", ""));
         etCompanyPhone.setText(prefs.getString("company_phone", ""));
         etCompanyPhone2.setText(prefs.getString("company_phone_2", ""));
@@ -671,7 +671,7 @@ public class MainActivity extends AppCompatActivity {
         View btnSave = dialogView.findViewById(R.id.btn_save_profile);
         View tvCancel = dialogView.findViewById(R.id.tv_cancel_edit_profile);
 
-        android.content.SharedPreferences userPrefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
+        android.content.SharedPreferences userPrefs = getSharedPreferences("UserProfile_" + nodeKey, MODE_PRIVATE);
         String currentName = userPrefs.getString("user_name", user.getDisplayName());
         currentProfilePhotoBase64 = userPrefs.getString("user_photo", null);
 
