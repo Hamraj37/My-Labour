@@ -9,6 +9,7 @@
     <string name="logged_in_as">Logged in as: %1$s</string>
     <string name="search_hint">Search labours&#8230;</string>
     <string name="new_update_available">New Update Available</string>
+    <string name="update_notification_content">Version %1$s is available. Tap to download.</string>
     <string name="version_format">Version : %1$s</string>
     <string name="update_message">A new version of My Labour is available for download.</string>
     <string name="recent_changes">Recent Changes:</string>

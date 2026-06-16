@@ -1,10 +1,15 @@
 package com.mylabour;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -59,11 +64,14 @@ public class MainActivity extends AppCompatActivity {
     private String currentSignatureBase64;
     private com.google.android.material.imageview.ShapeableImageView ivDialogSignature;
     private View btnRemoveSignature;
+    private static final String UPDATE_CHANNEL_ID = "app_update_channel";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        createUpdateNotificationChannel();
 
         signaturePickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) {
@@ -217,7 +225,10 @@ public class MainActivity extends AppCompatActivity {
                     if (currentVersion != null) {
                         String currentClean = currentVersion.replace("v", "").trim();
                         if (!latestClean.equals(currentClean)) {
-                            runOnUiThread(() -> showUpdateDialog(latestVersion, finalDownloadUrl, formattedNotes));
+                            runOnUiThread(() -> {
+                                showUpdateDialog(latestVersion, finalDownloadUrl, formattedNotes);
+                                showUpdateNotification(latestVersion, finalDownloadUrl);
+                            });
                         }
                     }
                 } else {
@@ -629,5 +640,44 @@ public class MainActivity extends AppCompatActivity {
         btnClose.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
+    }
+
+    private void createUpdateNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    UPDATE_CHANNEL_ID,
+                    "App Updates",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Notifications for new app versions");
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    private void showUpdateNotification(String version, String downloadUrl) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl));
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, UPDATE_CHANNEL_ID)
+                .setSmallIcon(R.drawable.logo)
+                .setContentTitle(getString(R.string.new_update_available))
+                .setContentText(getString(R.string.update_notification_content, version))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.notify(2, builder.build());
     }
 }
