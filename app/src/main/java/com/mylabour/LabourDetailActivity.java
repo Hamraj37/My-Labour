@@ -62,6 +62,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.nio.charset.StandardCharsets;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
@@ -73,7 +74,7 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private List<CalendarAdapter.CalendarDay> days;
     private CalendarAdapter adapter;
-    private TextView tvFullDay, tvHalfDay, tvAbsent, tvTotalAmount, tvWage, tvPreviousDue, tvPaidAmount, tvDueAmount, tvAdvanceAmount, tvPrevDueLabel;
+    private TextView tvFullDay, tvHalfDay, tvAbsent, tvTotalAmount, tvWage, tvPreviousDue, tvPaidAmount, tvDueAmount, tvAdvanceAmount, tvPrevDueLabel, tvUniqueCode;
     private View layoutPreviousDue, dividerPrevDue, layoutPaidAmount, dividerPaid, layoutDueAmount, layoutAdvanceAmount, dividerTotal, fabSetPaid;
     private android.widget.LinearLayout layoutPaymentsList;
     private View tvPaymentHistoryLabel, cardPaymentHistory;
@@ -187,6 +188,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             layoutPaymentsList = findViewById(R.id.layout_payments_list);
             tvPaymentHistoryLabel = findViewById(R.id.tv_payment_history_label);
             cardPaymentHistory = findViewById(R.id.card_payment_history);
+            tvUniqueCode = findViewById(R.id.tv_unique_code);
 
             tvName.setText(labour.name);
             String number = labour.number;
@@ -198,8 +200,10 @@ public class LabourDetailActivity extends AppCompatActivity {
             tvEmail.setText(labour.email != null && !labour.email.isEmpty() ? labour.email : "N/A");
             tvAddress.setText(labour.address != null && !labour.address.isEmpty() ? labour.address : "N/A");
             tvWage.setText(getString(R.string.wage_format, formatAmount(dailyWage)));
-
+            
             currentCalendar = Calendar.getInstance();
+            updateMonthlyUniqueCodeDisplay();
+
             setupFirebase();
             setupCustomCalendar();
             fetchAttendanceData();
@@ -437,7 +441,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setFakeBoldText(true);
 
-        // Generate verification QR code data
+        // Generate verification data
         int fullDays = Integer.parseInt(tvFullDay.getText().toString());
         int halfDays = Integer.parseInt(tvHalfDay.getText().toString());
         int absent = Integer.parseInt(tvAbsent.getText().toString());
@@ -445,7 +449,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         double grossTotal = totalEarnings + previousMonthDue;
         double balance = grossTotal - paidAmountForMonth;
         
-        String verificationHash = generateVerificationHash(labour, grossTotal, balance);
+        String monthlyUniqueCode = getMonthlyUniqueCode();
         
         android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs_" + nodeKey, MODE_PRIVATE);
         String companyName = prefs.getString("company_name", "");
@@ -488,7 +492,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             qrDataBuilder.append("Status: Settled\n");
         }
         
-        qrDataBuilder.append("Hash: ").append(verificationHash);
+        qrDataBuilder.append("Unique Code: ").append(monthlyUniqueCode);
         
         Bitmap qrBitmap = generateQRCode(qrDataBuilder.toString(), 200);
 
@@ -681,6 +685,10 @@ public class LabourDetailActivity extends AppCompatActivity {
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     currentLabour = snapshot.getValue(Labour.class);
                     if (currentLabour != null) {
+                        if (currentLabour.uniqueCode == null || currentLabour.uniqueCode.isEmpty()) {
+                            String code = labourId.length() > 4 ? labourId.substring(labourId.length() - 4).toUpperCase() : labourId.toUpperCase();
+                            mLabourRef.child("uniqueCode").setValue(code);
+                        }
                         updateHeaderUI();
                     }
                 }
@@ -710,7 +718,36 @@ public class LabourDetailActivity extends AppCompatActivity {
         tvEmail.setText(currentLabour.email != null && !currentLabour.email.isEmpty() ? currentLabour.email : "N/A");
         tvAddress.setText(currentLabour.address != null && !currentLabour.address.isEmpty() ? currentLabour.address : "N/A");
 
+        updateMonthlyUniqueCodeDisplay();
+
         loadAvatarLocally();
+    }
+
+    private void updateMonthlyUniqueCodeDisplay() {
+        if (tvUniqueCode != null) {
+            tvUniqueCode.setText("#" + getMonthlyUniqueCode());
+        }
+    }
+
+    private String getMonthlyUniqueCode() {
+        String baseCode;
+        if (currentLabour != null && currentLabour.uniqueCode != null) {
+            baseCode = currentLabour.uniqueCode;
+        } else if (labourId != null) {
+            baseCode = labourId.length() > 4 ? labourId.substring(labourId.length() - 4).toUpperCase() : labourId.toUpperCase();
+        } else {
+            baseCode = "LB";
+        }
+        
+        SimpleDateFormat sdf = new SimpleDateFormat("MMyy", Locale.getDefault());
+        String datePart = sdf.format(currentCalendar.getTime());
+        
+        // Generate a stable 4-digit random number based on labourId and date
+        long seed = ((labourId != null ? labourId.hashCode() : 0L) + datePart.hashCode());
+        Random r = new Random(seed);
+        int randomPart = 1000 + r.nextInt(9000);
+        
+        return baseCode + "-" + randomPart + "-" + datePart;
     }
 
     private void saveAvatarLocally(String base64) {
@@ -760,6 +797,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         setupCustomCalendar();
         fetchAttendanceData();
         calculateAndDisplayPreviousDue();
+        updateMonthlyUniqueCodeDisplay();
     }
 
     private void showEditWageDialog() {
@@ -814,6 +852,9 @@ public class LabourDetailActivity extends AppCompatActivity {
                     if (key == null) continue;
                     
                     switch (key) {
+                        case "monthlyUniqueCode":
+                            // We can use the stored one if needed, but for now we just ensure it exists
+                            break;
                         case "monthlyWage": {
                             Object value = postSnapshot.getValue();
                             if (value instanceof Number) {
@@ -856,6 +897,10 @@ public class LabourDetailActivity extends AppCompatActivity {
                     return;
                 }
                 tvWage.setText(getString(R.string.wage_format, formatAmount(dailyWage)));
+
+                if (!snapshot.hasChild("monthlyUniqueCode") && currentLabour != null) {
+                    mAttendanceRef.child("monthlyUniqueCode").setValue(getMonthlyUniqueCode());
+                }
 
                 double totalPaidFromList = 0;
                 for (Payment p : paymentList) totalPaidFromList += p.amount;
@@ -1393,28 +1438,6 @@ public class LabourDetailActivity extends AppCompatActivity {
             return bitmap;
         } catch (Exception e) {
             return null;
-        }
-    }
-
-    private String generateVerificationHash(Labour labour, double totalEarnings, double due) {
-        try {
-            // Include more fields in the hash to detect any edits in the report
-            String monthKey = currentCalendar.get(Calendar.YEAR) + "_" + (currentCalendar.get(Calendar.MONTH) + 1);
-            String attendanceData = tvFullDay.getText().toString() + "|" + tvHalfDay.getText().toString() + "|" + tvAbsent.getText().toString();
-            String data = labour.id + "|" + labour.name + "|" + monthKey + "|" + attendanceData + "|" +
-                          String.format(Locale.US, "%.2f", totalEarnings) + "|" + 
-                          String.format(Locale.US, "%.2f", due);
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString().substring(0, 16); // Take first 16 chars for brevity
-        } catch (Exception e) {
-            return "HASH_ERROR";
         }
     }
 }

@@ -830,4 +830,17 @@
 
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/tv_unique_code"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="16dp"
+        android:alpha="0.5"
+        android:textColor="?attr/colorOutline"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:fontFamily="monospace"
+        android:text="#000000"/>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

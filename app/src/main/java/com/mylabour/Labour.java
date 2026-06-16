@@ -8,6 +8,7 @@ public class Labour implements Serializable {
     public String email;
     public String number;
     public String address;
+    public String uniqueCode;
     public double baseWage;
     public double initialAdvance;
 
@@ -23,5 +24,8 @@ public class Labour implements Serializable {
         this.address = address;
         this.baseWage = 0;
         this.initialAdvance = 0;
+        if (id != null) {
+            this.uniqueCode = id.length() > 6 ? id.substring(id.length() - 6).toUpperCase() : id.toUpperCase();
+        }
     }
 }
