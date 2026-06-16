@@ -2,7 +2,9 @@ package com.mylabour;
 
 import android.app.Application;
 import com.google.android.material.color.DynamicColors;
+import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 import java.util.Calendar;
@@ -16,6 +18,28 @@ public class MyLabourApp extends Application {
         DynamicColors.applyToActivitiesIfAvailable(this);
         
         scheduleAttendanceReminder();
+        scheduleUpdateCheck();
+    }
+
+    private void scheduleUpdateCheck() {
+        WorkManager workManager = WorkManager.getInstance(this);
+        
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+
+        PeriodicWorkRequest updateRequest = new PeriodicWorkRequest.Builder(
+                UpdateCheckWorker.class,
+                24, TimeUnit.HOURS
+        )
+        .setConstraints(constraints)
+        .build();
+
+        workManager.enqueueUniquePeriodicWork(
+                "UpdateCheckWork",
+                ExistingPeriodicWorkPolicy.KEEP,
+                updateRequest
+        );
     }
 
     private void scheduleAttendanceReminder() {
