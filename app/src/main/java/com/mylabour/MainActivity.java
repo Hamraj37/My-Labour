@@ -418,7 +418,10 @@ public class MainActivity extends AppCompatActivity {
         TextView tvVersion = dialogView.findViewById(R.id.tv_dialog_version);
 
         tvName.setText(user.getDisplayName() != null ? user.getDisplayName() : "User");
-        tvEmail.setText(user.getEmail());
+        
+        String email = user.getEmail();
+        String phone = user.getPhoneNumber();
+        tvEmail.setText(email != null ? email : (phone != null ? phone : "User"));
 
         try {
             String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
