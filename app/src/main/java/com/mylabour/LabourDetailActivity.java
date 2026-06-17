@@ -400,19 +400,27 @@ public class LabourDetailActivity extends AppCompatActivity {
     private File generatePdf(Labour labour) {
         View view = findViewById(R.id.content_to_export);
         View btnChangePhoto = findViewById(R.id.btn_change_photo);
+        View bottomSpacer = findViewById(R.id.bottom_spacer);
         GridView calendarGrid = findViewById(R.id.calendar_grid);
         
+        // Temporarily hide UI elements not needed in PDF
+        if (btnChangePhoto != null) btnChangePhoto.setVisibility(View.INVISIBLE);
+        if (bottomSpacer != null) bottomSpacer.setVisibility(View.GONE);
+        
+        // Re-measure view after hiding elements to get correct height
+        view.measure(View.MeasureSpec.makeMeasureSpec(view.getWidth(), View.MeasureSpec.EXACTLY),
+                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
         int width = view.getWidth();
-        int height = view.getHeight();
+        int height = view.getMeasuredHeight();
 
         if (width <= 0 || height <= 0) {
             Toast.makeText(this, "Content not ready yet", Toast.LENGTH_SHORT).show();
+            // Restore visibility if we return early
+            if (btnChangePhoto != null) btnChangePhoto.setVisibility(View.VISIBLE);
+            if (bottomSpacer != null) bottomSpacer.setVisibility(View.VISIBLE);
             return null;
         }
 
-        // Temporarily hide UI elements not needed in PDF
-        if (btnChangePhoto != null) btnChangePhoto.setVisibility(View.INVISIBLE);
-        
         // Hide delete buttons in payment history
         List<View> deleteButtons = new ArrayList<>();
         for (int i = 0; i < layoutPaymentsList.getChildCount(); i++) {
@@ -526,44 +534,27 @@ public class LabourDetailActivity extends AppCompatActivity {
             String footerText = "Powered by My Labour - Page " + (i + 1) + " of " + totalPages;
             canvas.drawText(footerText, width / 2f, pageHeight - (footerHeight / 2f) + 5, paint);
 
-            // Draw QR Code on the last page, aligned with signature area
+            // Draw QR Code on the last page, on the left side
             if (i == totalPages - 1 && qrBitmap != null) {
-                int qrSize = 140; // Balanced size for bottom placement
-                int margin = 30;
-                int sigBottom = layoutSignatureExport.getBottom();
-                int sigLeft = layoutSignatureExport.getLeft();
-                int sigWidth = layoutSignatureExport.getWidth();
+                int qrSize = 140; 
+                int margin = 35;
                 int pageTopOffset = i * contentHeightPerPage;
                 
-                float drawX;
+                float drawX = margin; // Fixed to left side
                 float drawY;
                 
                 if (layoutSignatureExport.getVisibility() == View.VISIBLE) {
-                    // Position horizontally centered with the signature block
-                    drawX = sigLeft + (sigWidth - qrSize) / 2f;
-                    // Position vertically below the "Authorized Signature" text
-                    drawY = (sigBottom - pageTopOffset) + 10;
-                    
-                    // If it goes off-screen to the right, align with the right edge of signature
-                    if (drawX + qrSize > width - margin) {
-                        drawX = width - qrSize - margin;
-                    }
+                    // Align vertically with the signature block area
+                    int sigTop = layoutSignatureExport.getTop();
+                    int sigHeight = layoutSignatureExport.getHeight();
+                    drawY = (sigTop - pageTopOffset) + (sigHeight - qrSize) / 2f;
                 } else {
-                    // If signature is not visible, place it at the bottom right
-                    drawX = width - qrSize - margin;
-                    drawY = (height - pageTopOffset) - qrSize - margin;
+                    // If signature is not visible, place it towards the bottom left
+                    drawY = (height - pageTopOffset) - qrSize - margin - 20;
                 }
                 
-                // Ensure it doesn't overlap the footer area
-                if (drawY + qrSize + 40 > contentHeightPerPage) {
-                    // If it would overlap footer, move it to the left of the signature instead
-                    drawY = (layoutSignatureExport.getTop() - pageTopOffset) + (layoutSignatureExport.getHeight() - qrSize) / 2f;
-                    drawX = sigLeft - qrSize - 40;
-                }
-                
-                // Final safety bounds
-                drawX = Math.max(margin, Math.min(drawX, width - qrSize - margin));
-                drawY = Math.max(margin, Math.min(drawY, contentHeightPerPage - qrSize - 45));
+                // Final safety bounds to ensure it's on page and above footer
+                drawY = Math.max(margin, Math.min(drawY, contentHeightPerPage - qrSize - 50));
                 
                 Rect destRect = new Rect((int)drawX, (int)drawY, (int)(drawX + qrSize), (int)(drawY + qrSize));
                 canvas.drawBitmap(qrBitmap, null, destRect, null);
@@ -585,6 +576,7 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         // Restore UI elements
         if (btnChangePhoto != null) btnChangePhoto.setVisibility(View.VISIBLE);
+        if (bottomSpacer != null) bottomSpacer.setVisibility(View.VISIBLE);
         for (View btn : deleteButtons) {
             btn.setVisibility(View.VISIBLE);
         }
