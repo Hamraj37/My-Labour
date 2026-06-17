@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Bundle;
@@ -438,7 +439,7 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         PdfDocument document = new PdfDocument();
         int pageHeight = (int) (width * 1.414); // A4 aspect ratio
-        int footerHeight = 50;
+        int footerHeight = 80;
         int contentHeightPerPage = pageHeight - footerHeight;
         
         int totalPages = (int) Math.ceil((double) height / contentHeightPerPage);
@@ -503,7 +504,7 @@ public class LabourDetailActivity extends AppCompatActivity {
         
         qrDataBuilder.append("Unique Code: ").append(monthlyUniqueCode);
         
-        Bitmap qrBitmap = generateQRCode(qrDataBuilder.toString(), 200);
+        Bitmap qrBitmap = generateQRCode(qrDataBuilder.toString(), 512);
 
         for (int i = 0; i < totalPages; i++) {
             PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(width, pageHeight, i + 1).create();
@@ -525,19 +526,58 @@ public class LabourDetailActivity extends AppCompatActivity {
             String footerText = "Powered by My Labour - Page " + (i + 1) + " of " + totalPages;
             canvas.drawText(footerText, width / 2f, pageHeight - (footerHeight / 2f) + 5, paint);
 
-            // Draw QR Code in the bottom right corner of the footer
-            if (qrBitmap != null) {
-                int qrSize = 40;
-                int qrMargin = 5;
-                Rect srcRect = new Rect(0, 0, qrBitmap.getWidth(), qrBitmap.getHeight());
-                Rect destRect = new Rect(width - qrSize - qrMargin, pageHeight - qrSize - qrMargin, width - qrMargin, pageHeight - qrMargin);
-                canvas.drawBitmap(qrBitmap, srcRect, destRect, null);
+            // Draw QR Code on the last page, aligned with signature area
+            if (i == totalPages - 1 && qrBitmap != null) {
+                int qrSize = 140; // Balanced size for bottom placement
+                int margin = 30;
+                int sigBottom = layoutSignatureExport.getBottom();
+                int sigLeft = layoutSignatureExport.getLeft();
+                int sigWidth = layoutSignatureExport.getWidth();
+                int pageTopOffset = i * contentHeightPerPage;
                 
-                Paint qrLabelPaint = new Paint();
-                qrLabelPaint.setColor(Color.GRAY);
-                qrLabelPaint.setTextSize(6);
-                qrLabelPaint.setTextAlign(Paint.Align.RIGHT);
-                canvas.drawText("Verify Report", width - qrSize - qrMargin - 2, pageHeight - (qrSize/2f), qrLabelPaint);
+                float drawX;
+                float drawY;
+                
+                if (layoutSignatureExport.getVisibility() == View.VISIBLE) {
+                    // Position horizontally centered with the signature block
+                    drawX = sigLeft + (sigWidth - qrSize) / 2f;
+                    // Position vertically below the "Authorized Signature" text
+                    drawY = (sigBottom - pageTopOffset) + 10;
+                    
+                    // If it goes off-screen to the right, align with the right edge of signature
+                    if (drawX + qrSize > width - margin) {
+                        drawX = width - qrSize - margin;
+                    }
+                } else {
+                    // If signature is not visible, place it at the bottom right
+                    drawX = width - qrSize - margin;
+                    drawY = (height - pageTopOffset) - qrSize - margin;
+                }
+                
+                // Ensure it doesn't overlap the footer area
+                if (drawY + qrSize + 40 > contentHeightPerPage) {
+                    // If it would overlap footer, move it to the left of the signature instead
+                    drawY = (layoutSignatureExport.getTop() - pageTopOffset) + (layoutSignatureExport.getHeight() - qrSize) / 2f;
+                    drawX = sigLeft - qrSize - 40;
+                }
+                
+                // Final safety bounds
+                drawX = Math.max(margin, Math.min(drawX, width - qrSize - margin));
+                drawY = Math.max(margin, Math.min(drawY, contentHeightPerPage - qrSize - 45));
+                
+                Rect destRect = new Rect((int)drawX, (int)drawY, (int)(drawX + qrSize), (int)(drawY + qrSize));
+                canvas.drawBitmap(qrBitmap, null, destRect, null);
+                
+                Paint qrLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                qrLabelPaint.setColor(Color.parseColor("#757575")); // Material Grey 600
+                qrLabelPaint.setTextSize(9);
+                qrLabelPaint.setTextAlign(Paint.Align.CENTER);
+                qrLabelPaint.setFakeBoldText(true);
+                canvas.drawText("Verify Report", drawX + qrSize / 2f, drawY + qrSize + 15, qrLabelPaint);
+                
+                qrLabelPaint.setTextSize(8);
+                qrLabelPaint.setFakeBoldText(false);
+                canvas.drawText("#" + monthlyUniqueCode, drawX + qrSize / 2f, drawY + qrSize + 26, qrLabelPaint);
             }
 
             document.finishPage(page);
@@ -1441,6 +1481,21 @@ public class LabourDetailActivity extends AppCompatActivity {
             int width = bitMatrix.getWidth();
             int height = bitMatrix.getHeight();
             
+            int[] rect = bitMatrix.getEnclosingRectangle();
+            if (rect == null) return null;
+            int qrLeft = rect[0];
+            int qrTop = rect[1];
+            int qrWidth = rect[2];
+            int qrHeight = rect[3];
+
+            // Finder pattern is 7 modules wide. Find pixel width of 7 modules.
+            int pixelWidth7Modules = 0;
+            while (pixelWidth7Modules < qrWidth && bitMatrix.get(qrLeft + pixelWidth7Modules, qrTop)) {
+                pixelWidth7Modules++;
+            }
+            float mSize = (float) pixelWidth7Modules / 7.0f;
+            float eyeSize = 7 * mSize;
+
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             canvas.drawColor(Color.WHITE);
@@ -1448,29 +1503,57 @@ public class LabourDetailActivity extends AppCompatActivity {
             // Draw logo as background with low opacity
             Bitmap logo = BitmapFactory.decodeResource(getResources(), R.drawable.logo);
             if (logo != null) {
-                int logoSize = (int) (size * 0.85); // Logo covers 85% of QR area
+                int logoSize = (int) (size * 0.45);
                 Bitmap scaledLogo = Bitmap.createScaledBitmap(logo, logoSize, logoSize, true);
-                int left = (width - logoSize) / 2;
-                int top = (height - logoSize) / 2;
-                
                 Paint logoPaint = new Paint();
-                logoPaint.setAlpha(45); // Set low opacity (approx 18%)
-                canvas.drawBitmap(scaledLogo, left, top, logoPaint);
+                logoPaint.setAlpha(40);
+                canvas.drawBitmap(scaledLogo, (width - logoSize) / 2f, (height - logoSize) / 2f, logoPaint);
             }
 
-            // Draw QR dots on top of the background logo
+            // Draw QR dots, skipping the finder pattern areas
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < height; y++) {
                     if (bitMatrix.get(x, y)) {
-                        bitmap.setPixel(x, y, Color.BLACK);
+                        boolean isEye = (x >= qrLeft && x < qrLeft + eyeSize && y >= qrTop && y < qrTop + eyeSize) ||
+                                (x >= qrLeft + qrWidth - eyeSize && x < qrLeft + qrWidth && y >= qrTop && y < qrTop + eyeSize) ||
+                                (x >= qrLeft && x < qrLeft + eyeSize && y >= qrTop + qrHeight - eyeSize && y < qrTop + qrHeight);
+                        
+                        if (!isEye) {
+                            bitmap.setPixel(x, y, Color.BLACK);
+                        }
                     }
-                    // Else leave it as is (white + faint logo)
                 }
             }
+
+            // Draw Styled Eyes (Finder Patterns)
+            drawStyledEye(canvas, qrLeft, qrTop, mSize); // Top-left
+            drawStyledEye(canvas, qrLeft + qrWidth - eyeSize, qrTop, mSize); // Top-right
+            drawStyledEye(canvas, qrLeft, qrTop + qrHeight - eyeSize, mSize); // Bottom-left
 
             return bitmap;
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private void drawStyledEye(Canvas canvas, float x, float y, float mSize) {
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        float eyeSize = 7 * mSize;
+
+        // Outer square
+        paint.setColor(Color.BLACK);
+        canvas.drawRoundRect(new RectF(x, y, x + eyeSize, y + eyeSize), mSize * 2, mSize * 2, paint);
+
+        // White inner square
+        paint.setColor(Color.WHITE);
+        float innerOffset = mSize;
+        float innerSize = 5 * mSize;
+        canvas.drawRoundRect(new RectF(x + innerOffset, y + innerOffset, x + innerOffset + innerSize, y + innerOffset + innerSize), mSize * 1.5f, mSize * 1.5f, paint);
+
+        // Center pupil
+        paint.setColor(Color.BLACK);
+        float pupilOffset = 2 * mSize;
+        float pupilSize = 3 * mSize;
+        canvas.drawRoundRect(new RectF(x + pupilOffset, y + pupilOffset, x + pupilOffset + pupilSize, y + pupilOffset + pupilSize), mSize, mSize, paint);
     }
 }
