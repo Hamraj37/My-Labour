@@ -74,4 +74,9 @@
     <string name="auth_failed">Authentication Failed.</string>
     <string name="login_failed_format">Login Failed: %1$s</string>
     <string name="registration_failed_format">Registration Failed: %1$s</string>
+    <string name="auth_error">Authentication error: </string>
+    <string name="auth_success">Authentication succeeded</string>
+    <string name="biometric_title">Biometric login for My Labour</string>
+    <string name="biometric_subtitle">Log in using your biometric credential</string>
+    <string name="biometric_lock">Biometric App Lock</string>
 </resources>

@@ -26,6 +26,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.widget.SearchView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt;
 import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -173,13 +175,75 @@ public class MainActivity extends AppCompatActivity {
                     .into(ivProfileToolbar);
         }
 
-        fetchLabours();
-
         FloatingActionButton fab = findViewById(R.id.fab_add_labour);
         fab.setOnClickListener(view -> showAddLabourDialog());
 
         requestRequiredPermissions();
         checkForUpdates();
+
+        // Biometric Authentication
+        if (savedInstanceState == null) {
+            checkBiometricAuthentication();
+        } else {
+            fetchLabours();
+        }
+    }
+
+    private void checkBiometricAuthentication() {
+        android.content.SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        boolean biometricEnabled = prefs.getBoolean("biometric_enabled", false);
+
+        if (!biometricEnabled) {
+            fetchLabours();
+            return;
+        }
+
+        BiometricManager biometricManager = BiometricManager.from(this);
+        int canAuthenticate = biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG | BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+        
+        if (canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS) {
+            showBiometricPrompt();
+        } else {
+            fetchLabours();
+        }
+    }
+
+    private void showBiometricPrompt() {
+        java.util.concurrent.Executor executor = ContextCompat.getMainExecutor(this);
+        BiometricPrompt biometricPrompt = new BiometricPrompt(MainActivity.this,
+                executor, new BiometricPrompt.AuthenticationCallback() {
+            @Override
+            public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
+                super.onAuthenticationError(errorCode, errString);
+                if (errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON || errorCode == BiometricPrompt.ERROR_USER_CANCELED) {
+                    finish();
+                } else {
+                    Toast.makeText(getApplicationContext(), getString(R.string.auth_error) + errString, Toast.LENGTH_SHORT).show();
+                    finish(); // Also close on other errors for security
+                }
+            }
+
+            @Override
+            public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
+                super.onAuthenticationSucceeded(result);
+                Toast.makeText(getApplicationContext(), R.string.auth_success, Toast.LENGTH_SHORT).show();
+                fetchLabours();
+            }
+
+            @Override
+            public void onAuthenticationFailed() {
+                super.onAuthenticationFailed();
+                Toast.makeText(getApplicationContext(), R.string.auth_failed, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        BiometricPrompt.PromptInfo promptInfo = new BiometricPrompt.PromptInfo.Builder()
+                .setTitle(getString(R.string.biometric_title))
+                .setSubtitle(getString(R.string.biometric_subtitle))
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+                .build();
+
+        biometricPrompt.authenticate(promptInfo);
     }
 
     private void requestRequiredPermissions() {
@@ -223,9 +287,6 @@ public class MainActivity extends AppCompatActivity {
                     String latestVersion = jsonObject.getString("tag_name"); // e.g., "v1.0.0"
                     String releaseNotes = jsonObject.optString("body", "New version available.");
                     
-                    // Format release notes to show clearly in dialog
-                    // Usually GitHub release notes contain markdown like "* Commit message"
-                    // We'll clean it up slightly if needed
                     final String formattedNotes = releaseNotes.replace("### Changes in this release", "").trim();
 
                     String downloadUrl = null;
@@ -244,7 +305,6 @@ public class MainActivity extends AppCompatActivity {
 
                     final String finalDownloadUrl = downloadUrl;
 
-                    // Clean the version strings (removing 'v' if present) for comparison
                     String latestClean = latestVersion.replace("v", "");
                     String currentVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
 
@@ -286,7 +346,6 @@ public class MainActivity extends AppCompatActivity {
         builder.setCancelable(false);
         AlertDialog dialog = builder.create();
         
-        // Make background transparent for rounded corners
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
@@ -451,9 +510,24 @@ public class MainActivity extends AppCompatActivity {
         com.google.android.material.button.MaterialButton btnEditProfile = dialogView.findViewById(R.id.btn_edit_profile);
         com.google.android.material.button.MaterialButton btnAbout = dialogView.findViewById(R.id.btn_dialog_about);
         com.google.android.material.button.MaterialButton btnPrivacy = dialogView.findViewById(R.id.btn_dialog_privacy);
+        com.google.android.material.materialswitch.MaterialSwitch switchBiometric = dialogView.findViewById(R.id.switch_biometric);
         View btnLogout = dialogView.findViewById(R.id.btn_dialog_logout);
         View tvClose = dialogView.findViewById(R.id.tv_dialog_close);
         TextView tvVersion = dialogView.findViewById(R.id.tv_dialog_version);
+
+        android.content.SharedPreferences appPrefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        boolean isBiometricEnabled = appPrefs.getBoolean("biometric_enabled", false);
+
+        BiometricManager biometricManager = BiometricManager.from(this);
+        if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG | BiometricManager.Authenticators.DEVICE_CREDENTIAL) == BiometricManager.BIOMETRIC_SUCCESS) {
+            switchBiometric.setVisibility(View.VISIBLE);
+            switchBiometric.setChecked(isBiometricEnabled);
+            switchBiometric.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                appPrefs.edit().putBoolean("biometric_enabled", isChecked).apply();
+            });
+        } else {
+            switchBiometric.setVisibility(View.GONE);
+        }
 
         android.content.SharedPreferences userPrefs = getSharedPreferences("UserProfile_" + nodeKey, MODE_PRIVATE);
         String customName = userPrefs.getString("user_name", user.getDisplayName());
@@ -483,7 +557,6 @@ public class MainActivity extends AppCompatActivity {
                     .into(ivProfile);
         }
 
-        // Load Company Details from SharedPreferences
         android.content.SharedPreferences prefs = getSharedPreferences("CompanyPrefs_" + nodeKey, MODE_PRIVATE);
         String companyName = prefs.getString("company_name", "");
         String companyAddress = prefs.getString("company_address", "");
@@ -705,7 +778,6 @@ public class MainActivity extends AppCompatActivity {
                     .putString("user_photo", currentProfilePhotoBase64)
                     .apply();
 
-            // Also update the toolbar profile image if it exists in MainActivity
             if (currentProfilePhotoBase64 != null) {
                 byte[] decodedString = Base64.decode(currentProfilePhotoBase64, Base64.DEFAULT);
                 Bitmap decodedByte = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);

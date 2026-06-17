@@ -71,6 +71,7 @@ dependencies {
     implementation libs.glide
     implementation libs.swiperefreshlayout
     implementation libs.work.runtime
+    implementation libs.biometric
     implementation libs.zxing.core
     implementation libs.zxing.android.embedded
     testImplementation libs.junit
