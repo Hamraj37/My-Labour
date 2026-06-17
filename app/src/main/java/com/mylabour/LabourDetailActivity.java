@@ -375,8 +375,107 @@ public class LabourDetailActivity extends AppCompatActivity {
                 Toast.makeText(this, "No UPI app found", Toast.LENGTH_SHORT).show();
             }
         } else {
-            Toast.makeText(this, "Scanned: " + data, Toast.LENGTH_LONG).show();
+            verifyScannedCode(data);
         }
+    }
+
+    private void verifyScannedCode(String scannedData) {
+        if (scannedData == null || scannedData.isEmpty()) return;
+
+        // Try to extract the unique code from the multi-line QR data
+        String uniqueCodeToVerify = "";
+        String[] lines = scannedData.split("\n");
+        for (String line : lines) {
+            if (line.startsWith("Unique Code: ")) {
+                uniqueCodeToVerify = line.substring("Unique Code: ".length()).trim();
+                break;
+            }
+        }
+        
+        // If "Unique Code:" prefix not found, use the first line or raw data (backward compatibility)
+        if (uniqueCodeToVerify.isEmpty()) {
+            uniqueCodeToVerify = scannedData.startsWith("#") ? scannedData.substring(1) : scannedData;
+        }
+
+        final String finalCode = uniqueCodeToVerify;
+        if (progressLoading != null) progressLoading.setVisibility(View.VISIBLE);
+        
+        // Check in Firebase
+        if (mAttendanceRef != null) {
+            mAttendanceRef.child("monthlyUniqueCode").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (progressLoading != null) progressLoading.setVisibility(View.GONE);
+                    String firebaseCode = snapshot.getValue(String.class);
+                    
+                    if (finalCode.equals(firebaseCode)) {
+                        showVerificationDialog(true, scannedData, finalCode);
+                    } else {
+                        // Check if it matches the locally generated one (fallback)
+                        if (finalCode.equals(getMonthlyUniqueCode())) {
+                             showVerificationDialog(true, scannedData, finalCode);
+                        } else {
+                             showVerificationDialog(false, scannedData, finalCode);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    if (progressLoading != null) progressLoading.setVisibility(View.GONE);
+                    Toast.makeText(LabourDetailActivity.this, "Verification error", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            if (progressLoading != null) progressLoading.setVisibility(View.GONE);
+            if (finalCode.equals(getMonthlyUniqueCode())) {
+                showVerificationDialog(true, scannedData, finalCode);
+            } else {
+                showVerificationDialog(false, scannedData, finalCode);
+            }
+        }
+    }
+
+    private void showVerificationDialog(boolean success, String fullData, String code) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_verification, null);
+        builder.setView(dialogView);
+
+        ImageView ivStatus = dialogView.findViewById(R.id.iv_verification_status);
+        TextView tvTitle = dialogView.findViewById(R.id.tv_verification_title);
+        TextView tvSubtitle = dialogView.findViewById(R.id.tv_verification_subtitle);
+        TextView tvDetails = dialogView.findViewById(R.id.tv_verification_details);
+        com.google.android.material.button.MaterialButton btnOk = dialogView.findViewById(R.id.btn_verification_ok);
+
+        if (success) {
+            ivStatus.setImageResource(android.R.drawable.ic_dialog_info);
+            ivStatus.setColorFilter(Color.parseColor("#2E7D32")); // Material Green 800
+            tvTitle.setText("Report Verified ✓");
+            tvSubtitle.setText("This document is AUTHENTIC");
+            tvSubtitle.setTextColor(Color.parseColor("#2E7D32"));
+            
+            String displayData = fullData.replace("VERIFY REPORT\n", "");
+            tvDetails.setText(displayData);
+        } else {
+            ivStatus.setImageResource(android.R.drawable.ic_dialog_alert);
+            ivStatus.setColorFilter(Color.parseColor("#C62828")); // Material Red 800
+            tvTitle.setText("Verification Failed ✗");
+            tvSubtitle.setText("Data mismatch detected");
+            tvSubtitle.setTextColor(Color.parseColor("#C62828"));
+            
+            tvDetails.setText("The scanned QR code does not match the digital records for " + 
+                (currentLabour != null ? currentLabour.name : "this labourer") + ".\n\n" +
+                "Scanned Code: #" + code + "\n\n" +
+                "Please ensure you are scanning the correct report or check if the code has been updated.");
+        }
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnOk.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     private void updateLabourDetails(String name, String email, String number, String address, double initialAdvance) {
@@ -523,6 +622,12 @@ public class LabourDetailActivity extends AppCompatActivity {
         qrDataBuilder.append("Name: ").append(labour.name).append("\n");
         if (labour.number != null && !labour.number.isEmpty()) {
             qrDataBuilder.append("Phone: ").append(labour.number).append("\n");
+        }
+        if (labour.email != null && !labour.email.isEmpty()) {
+            qrDataBuilder.append("Email: ").append(labour.email).append("\n");
+        }
+        if (labour.address != null && !labour.address.isEmpty()) {
+            qrDataBuilder.append("Addr: ").append(labour.address).append("\n");
         }
         qrDataBuilder.append("Attendance: ").append(fullDays).append("F, ")
                      .append(halfDays).append("H, ")
