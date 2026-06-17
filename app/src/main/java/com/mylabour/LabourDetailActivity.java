@@ -103,6 +103,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private ImageView ivDetailSignature;
     private com.google.android.material.imageview.ShapeableImageView ivDetailAvatar;
     private ActivityResultLauncher<ScanOptions> qrScannerLauncher;
+    private String lastEditStr = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -525,6 +526,13 @@ public class LabourDetailActivity extends AppCompatActivity {
             if (line.startsWith("Unique Code: ")) {
                 return line.substring(13).trim().equals(getMonthlyUniqueCode());
             }
+            if (line.startsWith("Last edit: ")) {
+                // If we have a local lastEditStr, we can try to match it
+                if (lastEditStr != null && !lastEditStr.isEmpty()) {
+                    return line.trim().equals(lastEditStr.replace(" | ", "").trim());
+                }
+                return true;
+            }
         } catch (Exception ignored) {}
         
         return true; // Default for non-critical or formatting lines
@@ -703,6 +711,9 @@ public class LabourDetailActivity extends AppCompatActivity {
         }
         
         qrDataBuilder.append("Unique Code: ").append(monthlyUniqueCode);
+        if (lastEditStr != null && !lastEditStr.isEmpty()) {
+            qrDataBuilder.append("\n").append(lastEditStr.replace(" | ", ""));
+        }
         
         Bitmap qrBitmap = generateQRCode(qrDataBuilder.toString(), 512);
 
@@ -958,7 +969,7 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private void updateMonthlyUniqueCodeDisplay() {
         if (tvUniqueCode != null) {
-            tvUniqueCode.setText("#" + getMonthlyUniqueCode());
+            tvUniqueCode.setText("#" + getMonthlyUniqueCode() + lastEditStr);
         }
     }
 
@@ -1026,6 +1037,7 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private void changeMonth(int offset) {
         currentCalendar.add(Calendar.MONTH, offset);
+        lastEditStr = "";
         updateAttendanceRef();
         setupCustomCalendar();
         fetchAttendanceData();
@@ -1063,6 +1075,7 @@ public class LabourDetailActivity extends AppCompatActivity {
                         // Also update base wage for the labour
                         mLabourRef.child("baseWage").setValue(newWage);
                         updateSummary();
+                        updateLastModified();
                         Toast.makeText(this, "Wage updated and set as base", Toast.LENGTH_SHORT).show();
                     })
                     .addOnFailureListener(e -> Toast.makeText(this, "Failed to update wage", Toast.LENGTH_SHORT).show());
@@ -1088,6 +1101,16 @@ public class LabourDetailActivity extends AppCompatActivity {
                         case "monthlyUniqueCode":
                             // We can use the stored one if needed, but for now we just ensure it exists
                             break;
+                        case "lastModified": {
+                            Object value = postSnapshot.getValue();
+                            if (value instanceof Number) {
+                                long lastMod = ((Number) value).longValue();
+                                SimpleDateFormat lastModSdf = new SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault());
+                                lastEditStr = " | Last edit: " + lastModSdf.format(new java.util.Date(lastMod));
+                                updateMonthlyUniqueCodeDisplay();
+                            }
+                            break;
+                        }
                         case "monthlyWage": {
                             Object value = postSnapshot.getValue();
                             if (value instanceof Number) {
@@ -1255,6 +1278,13 @@ public class LabourDetailActivity extends AppCompatActivity {
             mAttendanceRef.child(String.valueOf(day)).removeValue();
         } else {
             mAttendanceRef.child(String.valueOf(day)).setValue(status);
+        }
+        updateLastModified();
+    }
+
+    private void updateLastModified() {
+        if (mAttendanceRef != null) {
+            mAttendanceRef.child("lastModified").setValue(System.currentTimeMillis());
         }
     }
 
@@ -1432,7 +1462,10 @@ public class LabourDetailActivity extends AppCompatActivity {
             if (id != null) {
                 Payment payment = new Payment(id, amount, System.currentTimeMillis());
                 mPaymentsRef.child(id).setValue(payment)
-                        .addOnSuccessListener(aVoid -> Toast.makeText(this, "Payment added successfully", Toast.LENGTH_SHORT).show());
+                        .addOnSuccessListener(aVoid -> {
+                            updateLastModified();
+                            Toast.makeText(this, "Payment added successfully", Toast.LENGTH_SHORT).show();
+                        });
             }
         }
     }
