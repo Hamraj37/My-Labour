@@ -29,15 +29,32 @@
                 app:tint="?attr/colorOnSurface"
                 android:contentDescription="Back" />
 
-            <TextView
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Labour Details"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="?attr/colorOnSurface"
-                android:layout_marginStart="8dp" />
+                android:orientation="vertical"
+                android:layout_marginStart="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Labour Details"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface" />
+
+                <TextView
+                    android:id="@+id/tv_unique_code"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:alpha="0.5"
+                    android:textColor="?attr/colorOutline"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:text="#000000" />
+            </LinearLayout>
 
             <ImageButton
                 android:id="@+id/btn_more"
@@ -790,19 +807,31 @@
         android:gravity="center"
         app:layout_behavior="@string/hide_bottom_view_on_scroll_behavior">
 
-        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab_set_paid"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
-            android:text="Add Payment"
-            android:textColor="?attr/colorOnPrimary"
+            android:contentDescription="Add Payment"
+            app:srcCompat="@drawable/ic_rupee"
             app:backgroundTint="?attr/colorPrimary"
-            app:icon="@android:drawable/ic_menu_add"
-            app:iconTint="?attr/colorOnPrimary"
+            app:tint="?attr/colorOnPrimary"
             app:elevation="6dp"
             app:pressedTranslationZ="12dp"
-            style="@style/Widget.Material3.ExtendedFloatingActionButton.Primary"/>
+            style="@style/Widget.Material3.FloatingActionButton.Primary"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_lock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="Lock Month"
+            app:srcCompat="@android:drawable/ic_lock_idle_lock"
+            app:backgroundTint="?attr/colorErrorContainer"
+            app:tint="?attr/colorOnErrorContainer"
+            app:elevation="6dp"
+            app:pressedTranslationZ="12dp"
+            style="@style/Widget.Material3.FloatingActionButton.Primary"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab_print"
@@ -844,18 +873,6 @@
 
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/tv_unique_code"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|start"
-        android:layout_margin="16dp"
-        android:alpha="0.5"
-        android:textColor="?attr/colorOutline"
-        android:textSize="10sp"
-        android:textStyle="bold"
-        android:fontFamily="monospace"
-        android:text="#000000"/>
 
     <ProgressBar
         android:id="@+id/progress_loading"

@@ -79,7 +79,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private List<CalendarAdapter.CalendarDay> days;
     private CalendarAdapter adapter;
     private TextView tvFullDay, tvHalfDay, tvAbsent, tvTotalAmount, tvWage, tvPreviousDue, tvPaidAmount, tvDueAmount, tvAdvanceAmount, tvPrevDueLabel, tvUniqueCode;
-    private View layoutPreviousDue, dividerPrevDue, layoutPaidAmount, dividerPaid, layoutDueAmount, layoutAdvanceAmount, dividerTotal, fabSetPaid;
+    private View layoutPreviousDue, dividerPrevDue, layoutPaidAmount, dividerPaid, layoutDueAmount, layoutAdvanceAmount, dividerTotal, fabSetPaid, fabLock;
     private android.widget.LinearLayout layoutPaymentsList;
     private View tvPaymentHistoryLabel, cardPaymentHistory;
     private DatabaseReference mAttendanceRef, mLabourRef, mBaseAttendanceRef, mPaymentsRef;
@@ -103,7 +103,8 @@ public class LabourDetailActivity extends AppCompatActivity {
     private ImageView ivDetailSignature;
     private com.google.android.material.imageview.ShapeableImageView ivDetailAvatar;
     private ActivityResultLauncher<ScanOptions> qrScannerLauncher;
-    private String lastEditStr = "";
+    private boolean isMonthLocked = false;
+    private String lastLockedStr = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -201,6 +202,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             layoutAdvanceAmount = findViewById(R.id.layout_advance_amount);
             dividerTotal = findViewById(R.id.divider_total);
             fabSetPaid = findViewById(R.id.fab_set_paid);
+            fabLock = findViewById(R.id.fab_lock);
             layoutPaymentsList = findViewById(R.id.layout_payments_list);
             tvPaymentHistoryLabel = findViewById(R.id.tv_payment_history_label);
             cardPaymentHistory = findViewById(R.id.card_payment_history);
@@ -231,6 +233,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             findViewById(R.id.btn_next_month).setOnClickListener(v -> changeMonth(1));
             
             findViewById(R.id.fab_set_paid).setOnClickListener(v -> showSetPaidDialog());
+            fabLock.setOnClickListener(v -> toggleMonthLock());
             findViewById(R.id.fab_print).setOnClickListener(v -> {
                 if (currentLabour != null) {
                     progressLoading.setVisibility(View.VISIBLE);
@@ -471,6 +474,17 @@ public class LabourDetailActivity extends AppCompatActivity {
                 sb.setSpan(new android.text.style.ForegroundColorSpan(color), 
                          start, sb.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+
+            // Add warning if month is currently unlocked
+            if (!isMonthLocked) {
+                int start = sb.length();
+                sb.append("\n⚠️ WARNING: This month is currently UNLOCKED. The data in this printed report might have been modified after printing.");
+                sb.setSpan(new android.text.style.ForegroundColorSpan(Color.parseColor("#EF6C00")), // Orange warning color
+                         start, sb.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                sb.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD),
+                         start, sb.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+
             tvDetails.setText(sb);
         } else {
             ivStatus.setImageResource(android.R.drawable.ic_dialog_alert);
@@ -526,10 +540,10 @@ public class LabourDetailActivity extends AppCompatActivity {
             if (line.startsWith("Unique Code: ")) {
                 return line.substring(13).trim().equals(getMonthlyUniqueCode());
             }
-            if (line.startsWith("Last edit: ")) {
-                // If we have a local lastEditStr, we can try to match it
-                if (lastEditStr != null && !lastEditStr.isEmpty()) {
-                    return line.trim().equals(lastEditStr.replace(" | ", "").trim());
+            if (line.startsWith("Locked on: ")) {
+                // If we have a local lastLockedStr, we can try to match it
+                if (lastLockedStr != null && !lastLockedStr.isEmpty()) {
+                    return line.trim().equals(lastLockedStr.replace(" | ", "").trim());
                 }
                 return true;
             }
@@ -711,8 +725,8 @@ public class LabourDetailActivity extends AppCompatActivity {
         }
         
         qrDataBuilder.append("Unique Code: ").append(monthlyUniqueCode);
-        if (lastEditStr != null && !lastEditStr.isEmpty()) {
-            qrDataBuilder.append("\n").append(lastEditStr.replace(" | ", ""));
+        if (lastLockedStr != null && !lastLockedStr.isEmpty()) {
+            qrDataBuilder.append("\n").append(lastLockedStr.replace(" | ", ""));
         }
         
         Bitmap qrBitmap = generateQRCode(qrDataBuilder.toString(), 512);
@@ -969,7 +983,7 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private void updateMonthlyUniqueCodeDisplay() {
         if (tvUniqueCode != null) {
-            tvUniqueCode.setText("#" + getMonthlyUniqueCode() + lastEditStr);
+            tvUniqueCode.setText("#" + getMonthlyUniqueCode() + lastLockedStr);
         }
     }
 
@@ -1037,7 +1051,7 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private void changeMonth(int offset) {
         currentCalendar.add(Calendar.MONTH, offset);
-        lastEditStr = "";
+        lastLockedStr = "";
         updateAttendanceRef();
         setupCustomCalendar();
         fetchAttendanceData();
@@ -1046,6 +1060,10 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void showEditWageDialog() {
+        if (isMonthLocked) {
+            Toast.makeText(this, "Month is locked. Cannot change wage.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Edit Daily Wage");
         
@@ -1075,7 +1093,6 @@ public class LabourDetailActivity extends AppCompatActivity {
                         // Also update base wage for the labour
                         mLabourRef.child("baseWage").setValue(newWage);
                         updateSummary();
-                        updateLastModified();
                         Toast.makeText(this, "Wage updated and set as base", Toast.LENGTH_SHORT).show();
                     })
                     .addOnFailureListener(e -> Toast.makeText(this, "Failed to update wage", Toast.LENGTH_SHORT).show());
@@ -1092,21 +1109,26 @@ public class LabourDetailActivity extends AppCompatActivity {
                 Double wageForMonth = null;
                 Double legacyPaidAmount = null;
                 paymentList.clear();
+                isMonthLocked = false;
+                lastLockedStr = "";
                 
                 for (DataSnapshot postSnapshot : snapshot.getChildren()) {
                     String key = postSnapshot.getKey();
                     if (key == null) continue;
                     
                     switch (key) {
+                        case "isLocked":
+                            isMonthLocked = postSnapshot.getValue(Boolean.class) != null && postSnapshot.getValue(Boolean.class);
+                            break;
                         case "monthlyUniqueCode":
                             // We can use the stored one if needed, but for now we just ensure it exists
                             break;
-                        case "lastModified": {
+                        case "lastLocked": {
                             Object value = postSnapshot.getValue();
                             if (value instanceof Number) {
-                                long lastMod = ((Number) value).longValue();
-                                SimpleDateFormat lastModSdf = new SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault());
-                                lastEditStr = " | Last edit: " + lastModSdf.format(new java.util.Date(lastMod));
+                                long lastLock = ((Number) value).longValue();
+                                SimpleDateFormat lastLockSdf = new SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault());
+                                lastLockedStr = " | Locked on: " + lastLockSdf.format(new java.util.Date(lastLock));
                                 updateMonthlyUniqueCodeDisplay();
                             }
                             break;
@@ -1218,6 +1240,10 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void deletePayment(Payment payment) {
+        if (isMonthLocked) {
+            Toast.makeText(this, "Month is locked. Cannot delete payments.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         new AlertDialog.Builder(this)
                 .setTitle("Delete Payment")
                 .setMessage("Are you sure you want to delete this payment of ₹" + formatAmount(payment.amount) + "?")
@@ -1279,12 +1305,11 @@ public class LabourDetailActivity extends AppCompatActivity {
         } else {
             mAttendanceRef.child(String.valueOf(day)).setValue(status);
         }
-        updateLastModified();
     }
 
-    private void updateLastModified() {
+    private void updateLastLocked() {
         if (mAttendanceRef != null) {
-            mAttendanceRef.child("lastModified").setValue(System.currentTimeMillis());
+            mAttendanceRef.child("lastLocked").setValue(System.currentTimeMillis());
         }
     }
 
@@ -1319,11 +1344,45 @@ public class LabourDetailActivity extends AppCompatActivity {
         calendarGrid.setAdapter(adapter);
 
         calendarGrid.setOnItemClickListener((parent, view, position, id) -> {
+            if (isMonthLocked) {
+                Toast.makeText(this, "This month is locked and cannot be edited.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             CalendarAdapter.CalendarDay day = days.get(position);
             if (day.dayNumber != 0) {
                 showStatusDialog(day);
             }
         });
+    }
+
+    private void toggleMonthLock() {
+        if (isMonthLocked) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Unlock Month")
+                    .setMessage("Are you sure you want to unlock this month for editing?")
+                    .setPositiveButton("Unlock", (d, w) -> {
+                        if (mAttendanceRef != null) {
+                            mAttendanceRef.child("isLocked").setValue(false);
+                            mAttendanceRef.child("lastLocked").removeValue();
+                            Toast.makeText(this, "Month unlocked", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        } else {
+            new AlertDialog.Builder(this)
+                    .setTitle("Lock Month")
+                    .setMessage("Are you sure you want to LOCK this month? Further edits will be disabled until unlocked.")
+                    .setPositiveButton("Lock", (d, w) -> {
+                        if (mAttendanceRef != null) {
+                            mAttendanceRef.child("isLocked").setValue(true);
+                            updateLastLocked();
+                            Toast.makeText(this, "Month locked", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        }
     }
 
     private void showStatusDialog(CalendarAdapter.CalendarDay day) {
@@ -1337,10 +1396,9 @@ public class LabourDetailActivity extends AppCompatActivity {
             } else {
                 newStatus = options[which];
             }
-            
+
             day.status = newStatus;
             saveAttendanceToFirebase(day.dayNumber, newStatus);
-            
             adapter.notifyDataSetChanged();
             updateSummary();
         });
@@ -1426,7 +1484,32 @@ public class LabourDetailActivity extends AppCompatActivity {
         } else {
             layoutDueAmount.setVisibility(View.GONE);
         }
-        fabSetPaid.setVisibility(View.VISIBLE);
+        fabSetPaid.setVisibility(isMonthLocked ? View.GONE : View.VISIBLE);
+        
+        if (fabLock instanceof com.google.android.material.floatingactionbutton.FloatingActionButton) {
+            com.google.android.material.floatingactionbutton.FloatingActionButton fab = (com.google.android.material.floatingactionbutton.FloatingActionButton) fabLock;
+            if (isMonthLocked) {
+                fab.setImageResource(android.R.drawable.ic_partial_secure);
+                fab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#E8F5E9")));
+                fab.setImageTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#2E7D32")));
+            } else {
+                fab.setImageResource(android.R.drawable.ic_lock_idle_lock);
+                fab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#FFEBEE")));
+                fab.setImageTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#C62828")));
+            }
+        }
+
+        // Update month display to show lock status
+        TextView tvMonthYear = findViewById(R.id.tv_month_year);
+        if (tvMonthYear != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
+            String monthName = sdf.format(currentCalendar.getTime());
+            if (isMonthLocked) {
+                tvMonthYear.setText(monthName + " 🔒");
+            } else {
+                tvMonthYear.setText(monthName);
+            }
+        }
 
         if (paidAmountForMonth > 0 || (previousMonthDue < 0 && Math.abs(previousMonthDue) > 0.01)) {
             dividerTotal.setVisibility(View.VISIBLE);
@@ -1436,6 +1519,10 @@ public class LabourDetailActivity extends AppCompatActivity {
     }
 
     private void showSetPaidDialog() {
+        if (isMonthLocked) {
+            Toast.makeText(this, "Month is locked. Cannot add payments.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add Payment");
 
@@ -1463,7 +1550,6 @@ public class LabourDetailActivity extends AppCompatActivity {
                 Payment payment = new Payment(id, amount, System.currentTimeMillis());
                 mPaymentsRef.child(id).setValue(payment)
                         .addOnSuccessListener(aVoid -> {
-                            updateLastModified();
                             Toast.makeText(this, "Payment added successfully", Toast.LENGTH_SHORT).show();
                         });
             }
