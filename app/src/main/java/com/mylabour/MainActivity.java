@@ -759,6 +759,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void openLabourDetail(Labour labour) {
+        Intent intent = new Intent(MainActivity.this, LabourDetailActivity.class);
+        intent.putExtra("labour", labour);
+        startActivity(intent);
+    }
+
     private void showUpdateNotification(String version) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {

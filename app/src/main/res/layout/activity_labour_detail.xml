@@ -818,6 +818,19 @@
             style="@style/Widget.Material3.FloatingActionButton.Primary"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_scan_qr"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="Scan QR"
+            app:srcCompat="@drawable/ic_qr_code_scanner"
+            app:backgroundTint="?attr/colorPrimaryContainer"
+            app:tint="?attr/colorOnPrimaryContainer"
+            app:elevation="6dp"
+            app:pressedTranslationZ="12dp"
+            style="@style/Widget.Material3.FloatingActionButton.Primary"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab_share"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

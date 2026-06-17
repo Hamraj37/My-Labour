@@ -3,6 +3,7 @@ package com.mylabour;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -53,6 +54,8 @@ import android.util.Base64;
 import android.graphics.BitmapFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import com.journeyapps.barcodescanner.ScanContract;
+import com.journeyapps.barcodescanner.ScanOptions;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -97,6 +100,7 @@ public class LabourDetailActivity extends AppCompatActivity {
     private TextView tvHeaderCompanyName, tvHeaderCompanyAddress, tvHeaderCompanyPhones;
     private ImageView ivDetailSignature;
     private com.google.android.material.imageview.ShapeableImageView ivDetailAvatar;
+    private ActivityResultLauncher<ScanOptions> qrScannerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,6 +155,13 @@ public class LabourDetailActivity extends AppCompatActivity {
                 ivDetailAvatar.setImageBitmap(resized);
                 ivDetailAvatar.setPadding(0, 0, 0, 0);
                 ivDetailAvatar.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            }
+        });
+
+        qrScannerLauncher = registerForActivityResult(new ScanContract(), result -> {
+            if (result.getContents() != null) {
+                String scannedData = result.getContents();
+                handleScanResult(scannedData);
             }
         });
 
@@ -237,6 +248,8 @@ public class LabourDetailActivity extends AppCompatActivity {
                     }, 100);
                 }
             });
+
+            findViewById(R.id.fab_scan_qr).setOnClickListener(v -> startScanning());
         }
     }
 
@@ -296,7 +309,6 @@ public class LabourDetailActivity extends AppCompatActivity {
 
     private void showEditLabourDialog() {
         if (currentLabour == null) return;
-
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_labour, null);
         builder.setView(dialogView);
@@ -342,6 +354,29 @@ public class LabourDetailActivity extends AppCompatActivity {
         tvCancel.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
+    }
+
+    private void startScanning() {
+        ScanOptions options = new ScanOptions();
+        options.setPrompt("Scan a QR Code");
+        options.setBeepEnabled(true);
+        options.setOrientationLocked(false);
+        options.setCaptureActivity(CaptureActivityPortrait.class);
+        qrScannerLauncher.launch(options);
+    }
+
+    private void handleScanResult(String data) {
+        if (data.startsWith("upi://")) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(data));
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast.makeText(this, "No UPI app found", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, "Scanned: " + data, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void updateLabourDetails(String name, String email, String number, String address, double initialAdvance) {
