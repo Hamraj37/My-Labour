@@ -92,6 +92,8 @@ public class LabourDetailActivity extends AppCompatActivity {
     private double totalEarnings = 0;
     private double previousMonthDue = 0;
     private double paidAmountForMonth = 0;
+    private int currentFullCount = 0, currentHalfCount = 0, currentAbsentCount = 0;
+    private double currentGrossTotal = 0, currentBalance = 0;
     private Labour currentLabour;
     private DataSnapshot allAttendanceSnapshot;
     private ActivityResultLauncher<String> avatarPickerLauncher;
@@ -449,16 +451,29 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         if (success) {
             ivStatus.setImageResource(android.R.drawable.ic_dialog_info);
-            ivStatus.setColorFilter(Color.parseColor("#2E7D32")); // Material Green 800
+            ivStatus.setColorFilter(Color.parseColor("#2E7D32")); 
             tvTitle.setText("Report Verified ✓");
             tvSubtitle.setText("This document is AUTHENTIC");
             tvSubtitle.setTextColor(Color.parseColor("#2E7D32"));
             
-            String displayData = fullData.replace("VERIFY REPORT\n", "");
-            tvDetails.setText(displayData);
+            android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder();
+            String[] lines = fullData.split("\n");
+            
+            for (String line : lines) {
+                if (line.equals("VERIFY REPORT")) continue;
+                
+                boolean fieldMatches = checkFieldMatch(line);
+                int start = sb.length();
+                sb.append(line).append(fieldMatches ? " ✓" : " ✗").append("\n");
+                
+                int color = fieldMatches ? Color.parseColor("#2E7D32") : Color.parseColor("#C62828");
+                sb.setSpan(new android.text.style.ForegroundColorSpan(color), 
+                         start, sb.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            tvDetails.setText(sb);
         } else {
             ivStatus.setImageResource(android.R.drawable.ic_dialog_alert);
-            ivStatus.setColorFilter(Color.parseColor("#C62828")); // Material Red 800
+            ivStatus.setColorFilter(Color.parseColor("#C62828")); 
             tvTitle.setText("Verification Failed ✗");
             tvSubtitle.setText("Data mismatch detected");
             tvSubtitle.setTextColor(Color.parseColor("#C62828"));
@@ -476,6 +491,43 @@ public class LabourDetailActivity extends AppCompatActivity {
 
         btnOk.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+    }
+
+    private boolean checkFieldMatch(String line) {
+        if (currentLabour == null) return true;
+        
+        try {
+            if (line.startsWith("Name: ")) {
+                return line.substring(6).trim().equalsIgnoreCase(currentLabour.name);
+            }
+            if (line.startsWith("Phone: ")) {
+                return line.substring(7).trim().contains(currentLabour.number);
+            }
+            if (line.startsWith("Attendance: ")) {
+                String expected = currentFullCount + "F, " + currentHalfCount + "H, " + currentAbsentCount + "A";
+                return line.substring(12).trim().equals(expected);
+            }
+            if (line.startsWith("Month Earn: ₹")) {
+                return line.substring(13).trim().equals(formatAmount(totalEarnings));
+            }
+            if (line.startsWith("Gross Total: ₹")) {
+                return line.substring(14).trim().equals(formatAmount(currentGrossTotal));
+            }
+            if (line.startsWith("Total Paid: ₹")) {
+                return line.substring(13).trim().equals(formatAmount(paidAmountForMonth));
+            }
+            if (line.startsWith("Net Due: ₹")) {
+                return line.substring(10).trim().equals(formatAmount(currentBalance));
+            }
+            if (line.startsWith("Net Advance: ₹")) {
+                return line.substring(14).trim().equals(formatAmount(Math.abs(currentBalance)));
+            }
+            if (line.startsWith("Unique Code: ")) {
+                return line.substring(13).trim().equals(getMonthlyUniqueCode());
+            }
+        } catch (Exception ignored) {}
+        
+        return true; // Default for non-critical or formatting lines
     }
 
     private void updateLabourDetails(String name, String email, String number, String address, double initialAdvance) {
@@ -1306,19 +1358,23 @@ public class LabourDetailActivity extends AppCompatActivity {
         tvHalfDay.setText(String.valueOf(halfCount));
         tvAbsent.setText(String.valueOf(absentCount));
         
+        currentFullCount = fullCount;
+        currentHalfCount = halfCount;
+        currentAbsentCount = absentCount;
+        
         totalEarnings = totalWorkUnits * dailyWage;
-        double grossTotal = totalEarnings + previousMonthDue;
-        double balance = grossTotal - paidAmountForMonth;
+        currentGrossTotal = totalEarnings + previousMonthDue;
+        currentBalance = currentGrossTotal - paidAmountForMonth;
 
-        tvTotalAmount.setText(getString(R.string.wage_format, formatAmount(grossTotal)));
+        tvTotalAmount.setText(getString(R.string.wage_format, formatAmount(currentGrossTotal)));
         tvPaidAmount.setText(getString(R.string.wage_format, formatAmount(paidAmountForMonth)));
 
-        if (balance > 0) {
-            tvDueAmount.setText(getString(R.string.wage_format, formatAmount(balance)));
+        if (currentBalance > 0) {
+            tvDueAmount.setText(getString(R.string.wage_format, formatAmount(currentBalance)));
             layoutDueAmount.setVisibility(View.VISIBLE);
             layoutAdvanceAmount.setVisibility(View.GONE);
-        } else if (balance < 0) {
-            tvAdvanceAmount.setText(getString(R.string.wage_format, formatAmount(Math.abs(balance))));
+        } else if (currentBalance < 0) {
+            tvAdvanceAmount.setText(getString(R.string.wage_format, formatAmount(Math.abs(currentBalance))));
             layoutDueAmount.setVisibility(View.GONE);
             layoutAdvanceAmount.setVisibility(View.VISIBLE);
         } else {
@@ -1335,7 +1391,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             dividerPaid.setVisibility(View.GONE);
         }
 
-        if (balance > 0) {
+        if (currentBalance > 0) {
             layoutDueAmount.setVisibility(View.VISIBLE);
         } else {
             layoutDueAmount.setVisibility(View.GONE);
