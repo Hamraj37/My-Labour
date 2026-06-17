@@ -1688,15 +1688,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             Canvas canvas = new Canvas(bitmap);
             canvas.drawColor(Color.WHITE);
 
-            // Draw logo as background with low opacity
             Bitmap logo = BitmapFactory.decodeResource(getResources(), R.drawable.logo);
-            if (logo != null) {
-                int logoSize = (int) (size * 0.45);
-                Bitmap scaledLogo = Bitmap.createScaledBitmap(logo, logoSize, logoSize, true);
-                Paint logoPaint = new Paint();
-                logoPaint.setAlpha(40);
-                canvas.drawBitmap(scaledLogo, (width - logoSize) / 2f, (height - logoSize) / 2f, logoPaint);
-            }
 
             // Draw QR dots, skipping the finder pattern areas
             for (int x = 0; x < width; x++) {
@@ -1717,6 +1709,23 @@ public class LabourDetailActivity extends AppCompatActivity {
             drawStyledEye(canvas, qrLeft, qrTop, mSize); // Top-left
             drawStyledEye(canvas, qrLeft + qrWidth - eyeSize, qrTop, mSize); // Top-right
             drawStyledEye(canvas, qrLeft, qrTop + qrHeight - eyeSize, mSize); // Bottom-left
+
+            // Draw Logo in the center
+            if (logo != null) {
+                int logoSize = (int) (size * 0.22); // Solid logo size
+                Bitmap scaledLogo = Bitmap.createScaledBitmap(logo, logoSize, logoSize, true);
+                
+                float centerX = width / 2f;
+                float centerY = height / 2f;
+                
+                // Draw white background for logo to make it clear
+                Paint whitePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                whitePaint.setColor(Color.WHITE);
+                float bgSize = logoSize + (mSize * 2);
+                canvas.drawRoundRect(new RectF(centerX - bgSize/2f, centerY - bgSize/2f, centerX + bgSize/2f, centerY + bgSize/2f), mSize * 2, mSize * 2, whitePaint);
+                
+                canvas.drawBitmap(scaledLogo, centerX - logoSize / 2f, centerY - logoSize / 2f, null);
+            }
 
             return bitmap;
         } catch (Exception e) {

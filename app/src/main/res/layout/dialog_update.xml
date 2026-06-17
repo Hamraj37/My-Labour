@@ -51,12 +51,12 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <ScrollView
-                android:id="@+id/scroll_view_notes"
+            <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:maxHeight="200dp"
-                android:layout_marginTop="8dp">
+                android:layout_height="150dp"
+                android:layout_marginTop="8dp"
+                android:fadeScrollbars="false"
+                android:scrollbars="vertical">
 
                 <TextView
                     android:id="@+id/tv_update_notes"
@@ -64,8 +64,8 @@
                     android:layout_height="wrap_content"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="14sp"
-                    android:lineSpacingExtra="4dp"/>
-            </ScrollView>
+                    android:lineSpacingExtra="4dp" />
+            </androidx.core.widget.NestedScrollView>
         </LinearLayout>
 
         <LinearLayout
