@@ -93,7 +93,7 @@
             <ImageView
                 android:layout_width="22dp"
                 android:layout_height="22dp"
-                android:src="@android:drawable/ic_menu_edit"
+                android:src="@drawable/ic_signature"
                 app:tint="?attr/colorOnSurfaceVariant"
                 android:contentDescription="@string/signature_icon"/>
 
