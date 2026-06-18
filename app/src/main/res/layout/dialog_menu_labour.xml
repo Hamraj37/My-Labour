@@ -35,7 +35,7 @@
             android:text="@string/edit_labour"
             android:gravity="start|center_vertical"
             android:textColor="?attr/colorOnSurface"
-            app:icon="@android:drawable/ic_menu_edit"
+            app:icon="@drawable/ic_edit_labour"
             app:iconTint="?attr/colorOnSurfaceVariant"
             app:iconSize="22dp"
             android:paddingStart="12dp"
@@ -57,7 +57,7 @@
             <ImageView
                 android:layout_width="22dp"
                 android:layout_height="22dp"
-                android:src="@android:drawable/ic_menu_info_details"
+                android:src="@drawable/ic_company"
                 app:tint="?attr/colorOnSurfaceVariant"
                 android:contentDescription="@string/company_info_icon"/>
 
