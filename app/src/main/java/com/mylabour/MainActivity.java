@@ -126,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
         String userEmail = currentUser.getEmail();
         nodeKey = (userEmail != null) ? userEmail.replace(".", ",") : currentUser.getUid();
         mDatabase = FirebaseDatabase.getInstance().getReference("labours").child(nodeKey);
+        mDatabase.keepSynced(true);
 
         recyclerView = findViewById(R.id.recycler_view);
         progressBar = findViewById(R.id.progress_bar);

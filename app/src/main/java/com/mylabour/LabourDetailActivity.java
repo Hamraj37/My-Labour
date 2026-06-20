@@ -937,6 +937,7 @@ public class LabourDetailActivity extends AppCompatActivity {
             mLabourRef = FirebaseDatabase.getInstance().getReference("labours")
                     .child(nodeKey)
                     .child(labourId);
+            mLabourRef.keepSynced(true);
 
             mLabourRef.addValueEventListener(new ValueEventListener() {
                 @Override

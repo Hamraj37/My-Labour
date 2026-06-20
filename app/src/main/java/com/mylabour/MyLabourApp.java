@@ -2,6 +2,7 @@ package com.mylabour;
 
 import android.app.Application;
 import com.google.android.material.color.DynamicColors;
+import com.google.firebase.database.FirebaseDatabase;
 import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.NetworkType;
@@ -14,6 +15,10 @@ public class MyLabourApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        
+        // Enable Firebase Realtime Database offline persistence
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+
         // Apply dynamic colors (Monet) to all activities in the app
         DynamicColors.applyToActivitiesIfAvailable(this);
         
