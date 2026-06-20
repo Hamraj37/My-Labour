@@ -959,7 +959,69 @@ public class LabourDetailActivity extends AppCompatActivity {
             mBaseAttendanceRef = mLabourRef.child("attendance");
             fetchPreviousMonthDue();
             updateAttendanceRef();
+            observeConnectionStatus();
         }
+    }
+
+    private void observeConnectionStatus() {
+        DatabaseReference connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected");
+        connectedRef.addValueEventListener(new ValueEventListener() {
+            private boolean isFirstCheck = true;
+
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Boolean connected = snapshot.getValue(Boolean.class);
+                boolean isConnected = connected != null && connected;
+
+                if (isFirstCheck) {
+                    isFirstCheck = false;
+                    // If initially disconnected, wait 5 seconds to avoid the startup lag
+                    if (!isConnected) {
+                        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                            connectedRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot2) {
+                                    Boolean stillConnected = snapshot2.getValue(Boolean.class);
+                                    if (stillConnected != null && !stillConnected) {
+                                        showOfflineInfoDialog();
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {}
+                            });
+                        }, 5000);
+                    }
+                } else if (!isConnected) {
+                    showOfflineInfoDialog();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void showOfflineInfoDialog() {
+        android.content.SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        boolean hideOfflineDialog = prefs.getBoolean("hide_offline_dialog", false);
+        if (hideOfflineDialog) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_offline, null);
+        builder.setView(dialogView);
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        dialogView.findViewById(R.id.btn_offline_got_it).setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btn_offline_dont_show).setOnClickListener(v -> {
+            prefs.edit().putBoolean("hide_offline_dialog", true).apply();
+            dialog.dismiss();
+        });
+
+        dialog.show();
     }
 
     private void updateHeaderUI() {
